@@ -1,0 +1,5 @@
+{
+  "host": "payables.multiagency.ai",
+  "selfService": { "maxAgents": 10, "firstPort": 9000 },
+  "agents": []
+}
