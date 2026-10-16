@@ -34,7 +34,7 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
               policy: { status: 'APPLIED', revision: 1, policy: { actions: ['swap', 'transfer'], owner_approval: true, frozen: false,
                 destinations: { mode: 'only', list: [{ action: 'transfer', address: 'payee.near', confidential: scenario !== 'public-recipient' }] },
                 assets: ['usdc'], budget: {}, limits: {} }, usage: { budget: {} }, cooldowns: {} } },
-            'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], activity: [],
+            'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [],
             'owner/pending': [], 'owner/actions': [], policyHistory: [], paymentHistory: { items: [], complete: true },
             'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 }, 'autopilot/evidence': { ticks: [] }, 'strategy/get': {}, invoices: [],
             pay: { outcome: 'refused', code: 'duplicate_held_payout' },

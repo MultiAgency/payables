@@ -14,7 +14,7 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
   await page.route('**/*', async route => {
    const { hostname, pathname: p } = new URL(route.request().url());
    if (hostname !== 'frontend.test') return route.abort();
-   if (p === '/gw/me') return route.fulfill({ json: { agents: [{ name: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: !options.member, canPropose: !options.member, canVote: !options.member, canExecute: !options.member, canManage: !options.member } } } } });
+   if (p === '/gw/me') return route.fulfill({ json: { invoices: null, agents: [{ name: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: !options.member, canPropose: !options.member, canVote: !options.member, canExecute: !options.member, canManage: !options.member } } } } });
    if (p.includes('/rpc/')) {
     const method = p.split('/rpc/')[1]; calls.push(method);
     if (method === state.denied) return route.fulfill({ status: options.denialStatus || 403, json: { error: 'Access denied' } });
@@ -25,7 +25,7 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
      overview: { agentId: 'fixture', area: options.payables ? 'payables' : 'treasury', book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [], agreed: [], notInForce: null, policy: { policy: { actions: ['swap'], destinations: { mode: 'only', list: [] } } } },
      'treasury/get': null, 'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
      activity: [{ at: options.payables ? new Date().toISOString() : '2026-10-01T00:00:00Z', kind: 'payout', request: { recipient: 'payee.near', amount: '1000000', asset: 'usdc' }, correlationId: 'payment-fixture', status: 'SUCCESS', policyRevision: 1, policyDigest: 'fixture-digest' }],
-     'owner/actions': options.ownerAction ? [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'submitted' }] : [], 'owner/pending': [], held: [], unresolved: options.unresolved ? [{ key: 'unresolved-fixture', kind: 'payout', at: '2026-10-01T00:00:00Z', status: 'PROCESSING', sent: true }] : [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
+     'owner/actions': options.ownerAction ? [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'submitted' }] : [], 'owner/pending': [], held: [], unresolved: options.unresolved ? [{ key: 'unresolved-fixture', kind: 'payout', at: '2026-10-01T00:00:00Z', status: 'PROCESSING', sent: true }] : [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
      paymentHistory: { items: [], complete: true }, paymentStatus: { status: options.outcome || 'PROCESSING', request: { recipient: 'payee.near', asset: 'usdc', amount: '1000000' }, approvalId: null },
      'strategy/get': null, 'autopilot/evidence': { ticks: [] },
     };

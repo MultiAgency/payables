@@ -130,7 +130,8 @@ Agreed work for one payee, a fixed USDC amount and a deadline, with a dedicated 
 invoice grant. The owner signs that agent's policy and grant and separately approves its held payout.
 The payee files against the order's immutable invoice identity on the invoice page. Exact terms and
 one retained payment identity are application checks; the provider enforces its signed policy and
-grant expiry. Expiry stops new submissions, not already accepted work, and does not return residual
+grant expiry. New submission readiness requires an observed balance equal to the fixed amount; deposits themselves
+are not prevented. Expiry stops new submissions, not already accepted work, and does not return residual
 funds. Work orders appear in Payables' Agreements and Payments; catalog brief 03 retains its original
 title, Invoicing & Purchase-Order Management, in the audit. The implementation is offline-tested,
 not observed on mainnet. Supplier conversion and forwarding are separate, unimplemented work.
@@ -196,6 +197,23 @@ flow. The optional Invoices gateway also offers a consolidated owner workspace a
 the existing per-agent owner permissions; contributor and owner sessions remain separate.
 
 ## Autopilot and records
+
+**Period agreement**:
+An owner-recorded reference to an externally signed work agreement: one contributor, a work period,
+a USDC compensation ceiling and any compensation already approved outside this workflow. It does
+not add the payee to the signed policy. Amendments retain their history; recipient, period and
+opening approved compensation remain fixed. Its ceiling is local review accounting, not a provider
+policy guarantee or proof of the external document's signature.
+
+**Compensation request**:
+A contributor's work report (Contributions, Assessment and evidence links), or invoice with a billed
+amount, under a period agreement. It moves through draft, submitted, changes requested, approved or
+declined. The owner records approved compensation and an explanation when setting a report's amount
+or changing an invoice amount. Approval consumes the period allowance once and sends no money.
+The submitted invoice amount remains unchanged in history. Legacy approved records without a
+separate compensation amount retain their invoice amount. New submissions require an isolated
+payout; previously bound shared invoices remain recoverable. Payment preparation, held payout approval
+and settlement stay separate. Failed payments do not release approved compensation.
 
 **Autopilot**:
 The treasury agent acting on its own schedule, off by default: each **tick** reads the status of open

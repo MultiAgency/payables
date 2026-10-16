@@ -36,7 +36,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
           overview: { agentId: 'fixture', area: treasury ? 'treasury' : 'payables', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [], grants: [],
             book: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 },
             policy: { policy: { actions: treasury ? ['swap'] : ['transfer'], frozen: false }, usage: { budget: {} }, cooldowns: {} } },
-          'treasury/get': null, held: [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], invoices: [],
+          'treasury/get': null, held: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [],
           unresolved: treasury ? [] : [{ key: 'fixture', at: '2026-10-01T00:00:00Z' }],
           'autopilot/get': { on, everyMin: 60, maxUsd: 10 }, 'autopilot/stop': undefined,
           'autopilot/evidence': { ticks: [] }, 'owner/actions': [],

@@ -66,7 +66,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
                 destinations: { mode: 'only', list: [{ action: 'transfer', address: payee, confidential: true }] } } } },
             'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 0 },
             held: [{ correlationId: `${agent}-payment`, at: new Date().toISOString(), request: { recipient: payee, asset: 'usdc', amount: '1000000' } }],
-            unresolved: [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], 'owner/actions': [], 'owner/pending': [], policyHistory: [],
+            unresolved: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/actions': [], 'owner/pending': [], policyHistory: [],
             activity: options.activityHistory ? [{ at: '2026-10-01T00:00:00Z', kind: 'payout', correlationId: `${agent}-retained-operation`,
               request: { recipient: payee, asset: 'usdc', amount: '1000000' }, status: 'SUCCESS' }] : [],
           };

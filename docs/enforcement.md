@@ -1,5 +1,16 @@
 # Enforcement: what the signed policy guarantees today
 
+Period compensation ceilings are local review accounting, separately from provider policy limits.
+The report workflow reserves the owner-approved amount (legacy approved invoices retain their billed
+amount), not a contributor report's suggested value. Isolated payout submission requires exact observed
+funding at preflight; deposits are not prevented, and this is not a lifetime provider cap.
+The workflow consumes allowance when compensation is approved, retaining it through
+payment failures/refunds. Real SQLite tests cover concurrent processes, command replay, changed
+terms and crash-after-commit recovery. Manual payouts, independent orders and approvals recorded
+elsewhere are outside that ledger; opening approved compensation must be entered explicitly.
+Signed Google Docs are referenced, not verified. This is not a provider-enforced lifetime cap;
+hosted and mainnet behavior remain unverified. See [payment requests](payment-requests.md).
+
 Stopped-volume release access remains a gate: the version-matched Railway CLI requires an active
 deployment for volume file commands and its recursive downloads do not preserve the required tree
 metadata. A maintenance-only image with no application/executor code and portable archive/restore

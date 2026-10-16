@@ -204,7 +204,7 @@ export function AgentTaskBoundary() {
     );
 
   const refresh = (
-    <Button variant="ghost" size="sm" onClick={() => overview.refetch()} disabled={overview.isFetching} aria-label="Refresh">
+    <Button variant="ghost" size="sm" onClick={() => { if (!overview.isFetching) void overview.refetch(); }} aria-disabled={overview.isFetching} aria-busy={overview.isFetching} aria-label="Refresh">
       {overview.isFetching ? <Spinner /> : <ArrowClockwise size={16} />}
     </Button>
   );

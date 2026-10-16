@@ -14,7 +14,7 @@ async function setupAndReturn(browser, root) {
    await page.route('**/*', async route => {
     const { hostname, pathname: p } = new URL(route.request().url());
     if (hostname !== 'frontend.test') return route.abort();
-    if (p === '/gw/me') return route.fulfill({ json: { agents: [{ name: 'fixture', area: treasury ? 'treasury' : 'payables', owner: 'owner.near', dao: true }], viewer: { account: 'owner.near', access: { fixture: { canSign: false, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
+    if (p === '/gw/me') return route.fulfill({ json: { invoices: null, agents: [{ name: 'fixture', area: treasury ? 'treasury' : 'payables', owner: 'owner.near', dao: true }], viewer: { account: 'owner.near', access: { fixture: { canSign: false, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
     if (p.includes('/rpc/')) {
      const method = p.split('/rpc/')[1]; calls.push(method);
      if (scenario === 'records-error' && method === 'owner/actions') return route.fulfill({ status: 503, json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Setup records unavailable' } } });
@@ -94,7 +94,7 @@ async function setupRecovery(browser, root) {
           activity:[{at,kind:'payout',request:{asset:'usdc',amount:'123',recipient:'private-payee.near'},correlationId:'private-operation',status:'PROCESSING'},{at,kind:'probe',request:{asset:'usdc',amount:'1'},correlationId:'private-probe',status:'FAILED'}],
           unresolved:[{key:'private-unresolved',at,kind:'payout',status:'PROCESSING',sent:true}],
           'owner/actions':[{correlationId:'private-owner',type:'approval_vote',signer:'wallet',stage:'submitted',expiresAt:'2020-01-01T00:00:00Z',ownerSucceeded:false,status:null,payment:{correlationId:'private-operation',verdict:'approve'}}],
-          'owner/pending':[],held:[],paymentHistory:{items:[],complete:true},'workOrders/list': [], 'agreements/list':[],'inbox/list':[],invoices:[],ledger:[],reconcileBooks:[],
+          'owner/pending':[],held:[],paymentHistory:{items:[],complete:true},'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':[],'inbox/list':[],invoices:[],ledger:[],reconcileBooks:[],
         };
         return route.fulfill({json:{json:rpcValue(values, method)}});
       }

@@ -165,7 +165,7 @@ function Attention() {
 
   if (kindOf(data) === "facilitator" && !items.length && !loading && !unavailable && !dismissing.error) {
     return <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-      <p>No items need attention in the records checked.</p>
+      <p>No payout or setup alerts in the records checked. Review reports & payment requests below.</p>
       {checked > 0 && <p className="text-xs">Last checked {new Date(checked).toLocaleString()}</p>}
     </div>;
   }

@@ -18,15 +18,15 @@ function paths(node: object, prefix = ""): string[] {
 /** What every admitted member may read. */
 const READS = ["instance", "setup", "overview", "policyHistory", "treasury/get", "activity", "unresolved", "held", "autopilot/get", "autopilot/evidence",
   "autopilot/log", "strategy/get", "inbox/list", "ledger", "ledgerCsv", "reconcileBooks", "owner/status", "owner/pending", "owner/actions", "paymentHistory", "agreements/list", "paymentStatus", "invoices",
-  "workOrders/list", "workOrders/get", "workOrders/status"];
+  "workOrders/list", "workOrders/get", "workOrders/status", "compensation/list"];
 /**
  * Preparations require FunctionCall proposal permission. None executes money or replaces the
  * owner's signature. The first three retain their historical non-intervention classification.
  */
 const PROPOSES = ["owner/prepare", "agreements/propose", "agreements/offer", "rebalance", "steward/propose", "deposit", "treasury/fund",
   "workOrders/create", "workOrders/prepare", "workOrders/deposit"];
-const EXECUTES = ["pay", "sweep", "executePlan", "autopilot/tick", "autopilot/enable"];
-const MANAGES = ["strategy/save", "treasury/link", "treasury/unlink", "treasury/setConfidential", "agreements/decline"];
+const EXECUTES = ["pay", "sweep", "executePlan", "autopilot/tick", "autopilot/enable", "compensation/review", "compensation/prepare", "compensation/send", "workOrders/file"];
+const MANAGES = ["strategy/save", "treasury/link", "treasury/unlink", "treasury/setConfidential", "agreements/decline", "compensation/agreement"];
 const MAINTAINS = ["autopilot/stop", "recover", "inbox/dismiss", "cancelPreparedInvoice"];
 
 const policy = {

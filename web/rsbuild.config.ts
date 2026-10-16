@@ -5,8 +5,9 @@ import { MULTIAGENCY_ICON } from "./src/shared/brand";
 
 export default defineConfig({
   plugins: [pluginReact()],
-  source: { entry: { index: "./src/main.tsx" } },
+  source: { entry: { index: "./src/main.tsx", contributor: "./src/contributor.tsx" } },
   html: {
+    template: "./template.html",
     title: "Payables | MultiAgency",
     // The platform logo is shared by the app and favicon.
     tags: [{ tag: "link", attrs: { rel: "icon", type: "image/svg+xml", href: `data:image/svg+xml,${encodeURIComponent(MULTIAGENCY_ICON)}` } }],

@@ -71,7 +71,7 @@ const overview = kind => ({ agentId: 'fixture', digest: 'fixture', notInForce: n
         }
         const kind = pathname.includes('/payables/') ? 'payables' : 'treasury';
         const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' } }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved' }] : [],
-          'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
+          'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
           'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
           'autopilot/evidence': { ticks: [run] } };
         if (method === 'autopilot/log') {

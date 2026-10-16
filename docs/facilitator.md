@@ -88,6 +88,10 @@ These are catalog targets, not established guarantees. Evidence stages describe 
 
 ## Gaps
 
+- [Reports and payment requests](payment-requests.md) add local review under manually recorded period
+  ceilings, separately from the existing per-invoice agreement terms. Hosted verification is outstanding;
+  this does not establish a provider-enforced lifetime compensation ceiling.
+
 - Contributor-proposed work orders and the optional consolidated Invoices owner entry are prepared
   locally; see [Invoices portal](contributor-portal.md). Owner decline, counteroffers and archival
   for these proposed work orders are not built. Hosted and mainnet verification remain outstanding.

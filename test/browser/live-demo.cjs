@@ -63,7 +63,7 @@ function overview(kind, state) {
           const values = { setup, instance: { agentId: kind, executor: !state.approveOnly }, overview: overview(kind, state),
             'treasury/get': null, unresolved: state.unresolved ? [{ key: 'unresolved-fixture', at: '2026-10-14T12:00:00Z', status: 'PROCESSING' }] : [],
             held: (state.held || state.submitted) && !state.settled ? [knownPayment] : [],
-            'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], activity: [
+            'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [
               { kind: 'swap', correlationId: 'unrelated-operation', planId: 'another-plan', at: '2026-10-15T12:00:00Z', status: 'SUCCESS', request: {} },
               ...(state.executed && !state.rejected ? [
                 { kind: 'shield', correlationId: 'demo-shield-fixture', planId, at: '2026-10-14T11:59:00Z', status: 'SUCCESS', request: {} },

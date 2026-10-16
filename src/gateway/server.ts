@@ -76,8 +76,8 @@ async function agentsView(me: Awaited<ReturnType<typeof viewer>>) {
 }
 
 /** Forwards a call to an agent server on loopback, streaming both ways (some procedures stream events). */
-function forward(req: IncomingMessage, res: ServerResponse, agent: AgentEntry, path: string) {
-  const headers = { ...req.headers, host: `127.0.0.1:${agent.port}` };
+function forward(req: IncomingMessage, res: ServerResponse, agent: AgentEntry, path: string, account: string) {
+  const headers = { ...req.headers, host: `127.0.0.1:${agent.port}`, "x-payables-actor": account };
   delete headers.origin;
   delete headers.cookie;
   const upstream = request({ host: "127.0.0.1", port: agent.port, path: `/rpc/${path}`, method: req.method, headers }, (answer) => {
@@ -233,7 +233,7 @@ createServer(async (req, res) => {
           return json(res, 503, { error: "The action could not be recorded, so it was not run" });
         }
       }
-      return forward(req, res, agent, call[2]!);
+      return forward(req, res, agent, call[2]!, account);
     }
 
     return serveStatic(res, DIST, pathname.replace(/^\/a\/[a-z0-9-]+/, "") || "/");

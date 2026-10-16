@@ -2,6 +2,9 @@
 
 Standalone Payables demo: https://payables.multiagency.ai
 
+The builder onboarding skill is prepared at `web/public/skill.md` and included in the web build
+at `/skill.md`. Hosted availability requires deployment and has not been verified.
+
 Explore confidential DAO payment intake and isolated purchase-order agents through explicitly
 labeled example walkthroughs. Regular NEAR accounts and eligible Sputnik DAO members can enter
 [self-service agent setup](docs/payables-self-service.md). The public previews move no funds;
@@ -229,6 +232,13 @@ in the inventory. Keep private release details out of both. Walkthroughs link to
 of maintaining separate requirement statuses.
 
 ## Not done yet
+
+The [report and payment-request workflow](docs/payment-requests.md) is prepared locally: manually
+recorded period agreements, amount-free contributor reports, owner-set compensation and connected
+isolated payout preparation. Existing invoices and bound shared payouts retain their histories.
+Its local ceiling accounting does not cover manual payouts or independent order creation. Hosted
+and mainnet verification, external signature verification, report export and personal-agent
+authentication remain outstanding.
 
 Work orders have no mainnet lifecycle evidence yet. Partial invoices, amendments, automatic residual-fund
 return, automatic archival, and supplier conversion/forwarding are not implemented. Work-order executors

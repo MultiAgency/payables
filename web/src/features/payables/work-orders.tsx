@@ -10,6 +10,7 @@ import { accountError, deadlineError } from "../../shared/form-validation";
 import { Badge, Button, CopyButton, Details, ErrorBox, Loading, QueryError, Section } from "../../shared/ui";
 import { ConfirmButton } from "../owner/confirm-button";
 import { useOwnerAction, useSigner, type OwnerAction } from "../owner/owner";
+import { workOrderProgress } from "../../../../src/work-order-protocol";
 import type { WorkOrderOwnerAction } from "../../../../src/work-order-protocol.js";
 
 const listKey = ["workOrders", BASE];
@@ -96,6 +97,16 @@ function actionName(action: OwnerAction): WorkOrderOwnerAction {
   throw new Error("Unsupported work order owner action.");
 }
 
+export function WorkOrderPayment({ id, onResume, disabled }: { id: string; onResume: () => void; disabled: boolean }) {
+  const query = useQuery({ queryKey: listKey, queryFn: () => client.workOrders.list(), retry: false });
+  const order = query.data?.find(order => order.id === id);
+  return <div className="flex flex-col gap-4" aria-label="Isolated payout">
+    {query.isPending && <Loading label="Loading the retained payout" />}
+    {query.error && <QueryError error={query.error} retry={() => query.refetch()} />}
+    {order ? <WorkOrderDetail order={order} /> : query.isSuccess && <><p>Preparation is incomplete. Reopen this payout's retained preparation; do not create another order.</p><Button disabled={disabled} onClick={onResume}>Resume preparation</Button></>}
+  </div>;
+}
+
 function WorkOrderDetail({ order }: { order: Order }) {
   const { setup } = useAgent();
   const signer = useSigner(setup);
@@ -110,8 +121,11 @@ function WorkOrderDetail({ order }: { order: Order }) {
   const [deposit, setDeposit] = useState<Awaited<ReturnType<typeof client.workOrders.deposit>>>();
   const [depositBusy, setDepositBusy] = useState(false);
   const [depositError, setDepositError] = useState<string>();
+  const [fileBusy, setFileBusy] = useState(false), [fileError, setFileError] = useState<string>();
+  const canFile = useCanCall("workOrders/file");
   const canDeposit = useCanCall("workOrders/deposit");
   const snapshot = query.data;
+  const progress = snapshot && workOrderProgress(snapshot);
   const expired = Date.parse(order.until) <= Date.now();
   const open = snapshot?.ownerActions.some(a => a.stage === "prepared" || a.stage === "submitted");
   const disabled = !signer.canSign || action.busy || Boolean(open || query.error || snapshot?.error);
@@ -128,10 +142,14 @@ function WorkOrderDetail({ order }: { order: Order }) {
     {query.error && <QueryError error={query.error} retry={() => query.refetch()} />}
     {snapshot && <>
       <div className="flex flex-wrap items-center gap-2"><Badge tone={snapshot.invoice?.status === "paid" ? "success" : "neutral"}>{orderStatus(snapshot, expired)}</Badge>
-        <Button variant="ghost" onClick={() => void query.refetch()}>Refresh work order</Button></div>
+        <Button variant="ghost" onClick={async () => { const refreshed = await query.refetch(); if (!refreshed.error && !refreshed.data?.error) setFileError(undefined); }}>Refresh work order</Button></div>
       <ErrorBox error={snapshot.error ?? undefined} />
       <p>Recorded payment: {snapshot.invoice ? snapshot.invoice.status === "waiting" ? "Held for owner approval; not paid." : snapshot.invoice.status : "No invoice filed."}</p>
       <p>Confidential balance: {snapshot.balance === null ? "unavailable" : `${fromUnits(snapshot.balance, 6)} USDC`}. {snapshot.grant ? `Grant expires ${date(snapshot.grant.expiresAt)}.` : "No matching live grant observed."}</p>
+      {progress && <p>Next: {({ authorize: "authorize the dedicated agent", policy: "review its signed policy", grant: "authorize its expiring grant", fund: "fund this payout", funding_review: "review excess funding", submit: "submit the fixed payout", expired: "review expired authority and retained funds", unavailable: "restore current observations" } as Record<string, string>)[progress.stage] ?? "follow the retained payment"}.</p>}
+      {progress?.excess && <p role="alert">Excess funding: {fromUnits(progress.excess, 6)} USDC. New submission waits for exact funding. Keep these funds in this account until a separately authorized recovery is available.</p>}
+      {progress?.expired && progress.residual && <p role="alert">Deadline passed with {fromUnits(progress.residual, 6)} USDC still observed in this account. Expiry does not return funds. Reconcile the retained payment and separately authorize recovery; do not replace this payout or loosen its supplier policy.</p>}
+      {snapshot.invoice && ["unknown", "failed", "refused", "needs_review"].includes(snapshot.invoice.status) && <p role="alert">Follow this retained payment before any further action. Approved compensation remains reserved. No replacement payout will be prepared here.</p>}
       <div className="flex flex-wrap gap-2">
         {!snapshot.agentId && control("Authorize work order", { type: "agent_create" }, "Sign a separate policy allowing only confidential USDC payments to this payee, with this amount as the per-payment cap. Every payout requires owner approval.", expired || snapshot.ownerActions.some(a => a.type === "agent_create"))}
         {snapshot.agentId && !snapshot.grant && control("Authorize invoice grant", { type: "grant_issue", label: "invoices" }, "Allow invoice submission until the deadline under this work order's policy.", expired || !snapshot.policyReady)}
@@ -141,13 +159,21 @@ function WorkOrderDetail({ order }: { order: Order }) {
         </>}
         {snapshot.grant && control("Revoke work order grant", { type: "grant_revoke", grantId: snapshot.grant.id }, "Stop new submissions. An accepted payment can still finish; residual funds remain in the order account.")}
       </div>
+      {progress?.stage === "submit" && <ConfirmButton path="workOrders/file" label="Submit payout" title="Submit this payout?" confirm="Submit payout"
+        description={`${terms} Submit this order's one retained invoice under its signed policy and grant. The payout will still require owner approval.`}
+        reviewKey={JSON.stringify(order)} disabled={!canFile || fileBusy || Boolean(query.error || snapshot.error)} onConfirm={async () => {
+          setFileBusy(true); setFileError(undefined);
+          try { await client.workOrders.file({ id: order.id }); await query.refetch({ throwOnError: true }); }
+          catch (e) { setFileError(errorMessage(e)); } finally { setFileBusy(false); }
+        }} />}
+      <ErrorBox error={fileError} />
       {!signer.canSign && <p>Use the owner's wallet or an authorized DAO member account to authorize this work order.</p>}
       {snapshot.ownerActions.length > 0 && <Details summary="Work order owner actions">
         {snapshot.ownerActions.map(a => <p key={a.correlationId} className="break-words">{a.type.replaceAll("_", " ")} · {a.stage} · {a.status ?? "outcome not confirmed"}</p>)}
         {open && <p>Follow this existing action. A prepared wallet action waits for its signing window to close if it was interrupted; do not create a replacement work order.</p>}
       </Details>}
       {snapshot.policyReady && snapshot.grant && !snapshot.invoice && !expired && <Details summary="Fund this work order">
-        <p>Obtain a confidential deposit address, then send USDC on NEAR from your wallet. Funding is separate from authorizing the invoice.</p>
+        <p>Obtain a confidential deposit address, then send exactly {fromUnits((BigInt(order.amount) > BigInt(snapshot.balance ?? "0") ? BigInt(order.amount) - BigInt(snapshot.balance ?? "0") : 0n).toString(), 6)} USDC on NEAR from your wallet. Do not replenish a submitted payout. Funding is separate from authorizing the invoice.</p>
         <Button variant="outline" disabled={!canDeposit || depositBusy || Boolean(query.error || snapshot.error)} onClick={async () => {
           setDepositBusy(true); setDepositError(undefined); setDeposit(undefined);
           try { setDeposit(await client.workOrders.deposit({ id: order.id })); } catch (e) { setDepositError(errorMessage(e)); } finally { setDepositBusy(false); }
@@ -176,5 +202,5 @@ function orderStatus(snapshot: Snapshot, expired: boolean) {
   if (!snapshot.policyReady) return "Policy needs review";
   if (!snapshot.grant) return "Needs invoice grant";
   if (snapshot.balance === null || BigInt(snapshot.balance) < BigInt(snapshot.order.amount)) return "Needs funding";
-  return "Ready for invoice";
+  return snapshot.balance !== snapshot.order.amount ? "Funding needs review" : "Ready to submit payout";
 }

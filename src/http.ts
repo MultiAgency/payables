@@ -55,6 +55,7 @@ export async function readJson(req: IncomingMessage): Promise<Record<string, unk
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8",
   ".js": "text/javascript",
   ".css": "text/css",
   ".svg": "image/svg+xml",

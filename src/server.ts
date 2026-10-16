@@ -64,7 +64,7 @@ async function serveDashboard(req: IncomingMessage, res: ServerResponse) {
     await (await import("./invoice-http.js")).invoiceHandler(req, res);
     return;
   }
-  const { matched } = await handler.handle(req, res, { prefix: "/rpc" });
+  const { matched } = await handler.handle(req, res, { prefix: "/rpc", context: { actor: typeof req.headers["x-payables-actor"] === "string" ? req.headers["x-payables-actor"] : "local-owner" } });
   if (matched) return;
 
   const url = URL.parse(req.url ?? "/", "http://localhost");

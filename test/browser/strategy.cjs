@@ -85,7 +85,7 @@ async function strategyAuthorization(browser, root) {
         const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, executor: !options.approveOnly, grant: options.noGrant ? null : setup.grant,
           dao: options.dao ? { id: 'fixture.dao', owner: { account_id: 'owner.near' } } : null },
           overview: options.payables ? { ...overview, policy: { ...overview.policy, policy: { ...overview.policy.policy, actions: ['transfer'] } } } : overview,
-          'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], activity: [], 'owner/pending': [], 'owner/actions': ownerActions,
+          'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [], 'owner/pending': [], 'owner/actions': ownerActions,
           'autopilot/get': current, 'strategy/get': { ...ready, digest, executor: !options.approveOnly, on: current.on, strategy: saved, grantMatches: options.approveOnly ? null : authorized,
             readiness: { state: options.approveOnly ? 'approve-only' : authorized ? 'off' : 'authorization-required', canEnable: !options.approveOnly && authorized,
               reasons: options.approveOnly ? ['Check authorization on the executor.'] : authorized ? [] : ready.readiness.reasons } } };

@@ -19,7 +19,7 @@ const { makeTick, recordingFor } = require('./fixtures/run.cjs');
   await page.route('**/*', async route => {
    const { hostname, pathname: p } = new URL(route.request().url());
    if (hostname !== 'frontend.test') return route.abort();
-   if (p === '/gw/me') return route.fulfill({json:{agents:[{name:'treasury',owner:'owner.near',dao:false}],viewer:{account:'owner.near',access:{treasury:{canSign:profile !== 'member',canPropose:profile !== 'member',canVote:profile !== 'member',canExecute:profile !== 'member',canManage:profile !== 'member'}}}}});
+   if (p === '/gw/me') return route.fulfill({json:{invoices:null,agents:[{name:'treasury',owner:'owner.near',dao:false}],viewer:{account:'owner.near',access:{treasury:{canSign:profile !== 'member',canPropose:profile !== 'member',canVote:profile !== 'member',canExecute:profile !== 'member',canManage:profile !== 'member'}}}}});
    if (p.includes('/rpc/')) {
     const method = p.split('/rpc/')[1]; calls.push(method);
     if (method === failure && mode === 'pending') return; // Leave this unrelated read unanswered.
@@ -31,7 +31,7 @@ const { makeTick, recordingFor } = require('./fixtures/run.cjs');
      overview:{agentId:'fixture',book:[],unmanaged:[],target:{},rebalance:{minLegUsd:1,maxCostBps:100},grants:[],agreed:[],notInForce:null,policy:{policy:{actions:['swap'],destinations:{mode:'only',list:[]}}}},
      'treasury/get':null, 'autopilot/get':{on:true,everyMin:60,maxUsd:10}, 'autopilot/evidence':{ticks:[tick],corrupt:[]}, 'autopilot/log':recordingFor(tick),
      activity:[{at:tick.at,kind:'payout',request:{},correlationId:'payment',status:'SUCCESS'}],
-     'owner/actions':[], 'owner/pending':[], held:[], unresolved:[], 'inbox/list':[], 'workOrders/list': [], 'agreements/list':[], invoices:[], reconcileBooks:[],
+     'owner/actions':[], 'owner/pending':[], held:[], unresolved:[], 'inbox/list':[], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':[], invoices:[], reconcileBooks:[],
      paymentHistory:{items:[],complete:true}, paymentStatus:{status:'SUCCESS',request:{recipient:'payee.near',asset:'usdc',amount:'1000000'},createdAt:tick.at,approvalId:null},
      'strategy/get':null,
     };

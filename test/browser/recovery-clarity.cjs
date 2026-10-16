@@ -28,7 +28,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
         const { hostname, pathname: p } = new URL(route.request().url());
         if (hostname !== 'frontend.test') return route.abort();
         if (p === '/gw/me') return route.fulfill({ json: {
-          agents: [{ name: 'treasury', area: 'treasury', owner: 'owner.near', dao: false }],
+          invoices: null, agents: [{ name: 'treasury', area: 'treasury', owner: 'owner.near', dao: false }],
           viewer: { account: 'owner.near', access: { treasury: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } },
         } });
         if (p.includes('/rpc/')) {
@@ -46,7 +46,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
             setup: { agentId: 'fixture', executor: true, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: null, dao: null },
             overview: { agentId: 'fixture', area: 'treasury', book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [], agreed: [], notInForce: null, policy: { policy: { actions: ['swap'], destinations: { mode: 'only', list: [] } } } },
             'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 },
-            activity: [], held: [], 'owner/pending': [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
+            activity: [], held: [], 'owner/pending': [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
             'owner/actions': [{ correlationId: 'retained-owner', type: 'approval_vote', signer: 'wallet', stage: 'submitted', expiresAt: at, ownerSucceeded: false, status: null, payment: { correlationId: 'retained-payment', verdict: 'approve' } }],
             unresolved: scenario !== 'outcomes' || state.empty ? [] : (state.checked ? checks.slice(-1) : checks).map(check => ({ key: check.key, kind: 'payout', at, status: check.status, sent: Boolean(check.status) })),
             paymentHistory: { items: [], complete: true }, 'strategy/get': null, 'autopilot/evidence': { ticks: [] },

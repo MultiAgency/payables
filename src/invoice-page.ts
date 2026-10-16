@@ -68,6 +68,7 @@ h3{font-size:15px;margin:0}.intro{max-width:65ch}.account{overflow-wrap:anywhere
 @media(max-width:520px){main{padding:24px 16px}.card{padding:20px}.fields{grid-template-columns:1fr}}
 [hidden]{display:none!important}code{word-break:break-all}
 </style></head><body><main>
+<a href="${escape(base)}/report">Report &amp; payment requests</a>
 <h1>${escape(title)}</h1>
 ${ownerUrl ? `<a href="${escape(ownerUrl)}">Owner workspace · all your agents</a>` : ""}
 <p class="intro">Agree on the work. Request a payout. Follow it through approval to payment, all with the NEAR account you want to receive funds.</p>

@@ -28,6 +28,7 @@ const READS = new Set([
   "paymentStatus",
   "agreements/list",
   "invoices",
+  "compensation/list",
   "workOrders/list",
   "workOrders/get",
   "workOrders/status",
@@ -41,8 +42,8 @@ const OWNER_PROPOSALS = new Set([
   "workOrders/prepare",
 ]);
 const PREPARE = new Set([...OWNER_PROPOSALS, "rebalance", "steward/propose", "deposit", "treasury/fund", "workOrders/deposit"]);
-const EXECUTE = new Set(["pay", "sweep", "executePlan", "autopilot/tick", "autopilot/enable"]);
-const MANAGE = new Set(["strategy/save", "treasury/link", "treasury/unlink", "treasury/setConfidential", "agreements/decline"]);
+const EXECUTE = new Set(["pay", "sweep", "executePlan", "autopilot/tick", "autopilot/enable", "compensation/prepare", "compensation/send", "compensation/review", "workOrders/file"]);
+const MANAGE = new Set(["strategy/save", "treasury/link", "treasury/unlink", "treasury/setConfidential", "agreements/decline", "compensation/agreement"]);
 const MAINTAIN = new Set(["autopilot/stop", "recover", "inbox/dismiss", "cancelPreparedInvoice"]);
 
 /** Whether this admitted account may call `path` (`owner/prepare`, without the `/rpc/` prefix). */

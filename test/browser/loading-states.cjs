@@ -48,7 +48,7 @@ async function open(browser, root, routePath, options = {}) {
     overview: currentOverview,
     'treasury/get': null, held,
     unresolved: options.unresolved ? [{ key: 'unresolved-loading-fixture', at: '2026-10-14T12:00:00Z' }] : [],
-    'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
+    'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
     activity: [], invoices: [], policyHistory: [], reconcileBooks: [],
     paymentHistory: { items: [], complete: true },
     'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 },

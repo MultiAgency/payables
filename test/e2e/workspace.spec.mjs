@@ -45,7 +45,7 @@ test('cross-agent navigation keeps identity and gateway permissions isolated', a
     expect(payout.body.json.agentId).toBe(stack.simulated.id);
     await page.getByRole('navigation', { name: 'Area', exact: true }).getByRole('link', { name: 'Agreements', exact: true }).click();
     await expect(page.getByRole('article', { name: `Recipient ${PAYEE}`, exact: true })).toBeVisible();
-    const offer = page.getByText('Offer terms (a purchase order, a bounty or grant award)', { exact: true });
+    const offer = page.getByText('Offer terms (a bounty, grant award or service agreement)', { exact: true });
     await expect(offer).toBeVisible();
     expect(await offer.evaluate(element => element.parentElement.open)).toBe(false);
     await page.getByRole('navigation', { name: 'Area', exact: true }).getByRole('link', { name: 'Payments', exact: true }).click();

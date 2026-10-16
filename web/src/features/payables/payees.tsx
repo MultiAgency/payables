@@ -18,6 +18,7 @@ import { intentsAccount, isNearcomAddress } from "../../../../src/intents-accoun
 import { useDirtyDraft } from "../../shared/dirty-draft";
 import { InvoicePageLink } from "./invoice-link";
 import { WorkOrders } from "./work-orders";
+import { CompensationAgreements } from "./compensation-owner";
 
 /** Thirty days from now, as a date input's value: the default deadline of new terms. */
 const inThirtyDays = () => new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
@@ -69,6 +70,7 @@ export function PayeesSection({ moneyOut = false }: { moneyOut?: boolean }) {
 
   if (facilitator) return <>
     <TaskEvidence task="agreements" />
+    <CompensationAgreements />
     <Agreements listed={listed} payees={payees} destinations={destinations} policySetup={policySetup} />
     <WorkOrders />
   </>;

@@ -20,7 +20,7 @@ async function pageFor(path,options={}){const page=await browser.newPage({viewpo
 await page.route('**/*',async r=>{const u=new URL(r.request().url()),p=u.pathname;if(u.hostname!=='frontend.test')return r.abort();
 if(p==='/gw/me'){if(options.gatewayDelay)await new Promise(ok=>setTimeout(ok,1200));if(failedGateway)return r.fulfill({status:503,json:{error:'Fixture gateway unavailable'}});return r.fulfill({json:{agents:options.public?[]:[{name:'treasury',area:'treasury',owner:'owner.near',dao:false},{name:'payables',area:'payables',owner:options.dao?setup.dao.id:'owner.near',dao:!!options.dao}],invoices:null,viewer:options.public?null:{account:'owner.near',access:{treasury:{canSign:true,canPropose:true,canVote:true,canExecute:true,canManage:true},payables:{canSign:!options.dao,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});}
 if(p==='/gw/proposals')return r.fulfill({json:[]});
-if(p.includes('/rpc/')){const m=p.split('/rpc/')[1];calls.push(m);requests.push({method:m,body:r.request().postDataJSON()});if(options.hold===m)await delayed;if(options.delay===m)await new Promise(ok=>setTimeout(ok,1200));if(options.error===m)return r.fulfill({status:500,json:{json:{defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'}}});const values={get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup,overview:overview(path.includes('payables')?'payables':'treasury'),'treasury/get':options.linked?{accountId:'treasury.near',dao:null,confidential:false,balances:{near:'0',usdc:'0'},payees:[]}:null,held:[],unresolved:[],'inbox/list':[],'workOrders/list': [], 'agreements/list':options.agreements?[{id:'a',payee:'payee.near',amount:'1000000',status:'requested',origin:'payee',at:new Date().toISOString()}]:[],activity:[],'owner/pending':[],'owner/actions':[],policyHistory:[],'autopilot/get':{on:false,everyMin:60,maxUsd:10},'autopilot/evidence':{ticks:[]},'strategy/get':options.ready?{strategy:{targetBps:{usdc:10000},minLegUsd:1,maxCostBps:100,autopilot:{everyMin:60,maxUsd:10}},digest:'fixture-strategy',grantSuffix:'fixture',executor:true,on:false,grantMatches:true,unresolved:0,grant:setup.grant,observedAt:new Date().toISOString(),readiness:{state:'off',canEnable:true,reasons:[]}}:{},pay:{outcome:'sent',status:'PENDING_APPROVAL'},'treasury/unlink':null,'agreements/decline':null};if(options.values)Object.assign(values,options.values);if(options.notInForce)values.overview.notInForce=options.notInForce;if(options.policy)values.overview.policy.policy={...values.overview.policy.policy,...options.policy};if(options.revision)values.overview.policy.revision=options.revision;if(options.digest)values.overview.digest=options.digest;if(options.approvalUnknown)values.overview.policy.policy.owner_approval=undefined;return r.fulfill({json:{json:rpcValue(values, m)}});}
+if(p.includes('/rpc/')){const m=p.split('/rpc/')[1];calls.push(m);requests.push({method:m,body:r.request().postDataJSON()});if(options.hold===m)await delayed;if(options.delay===m)await new Promise(ok=>setTimeout(ok,1200));if(options.error===m)return r.fulfill({status:500,json:{json:{defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'}}});const values={get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup,overview:overview(path.includes('payables')?'payables':'treasury'),'treasury/get':options.linked?{accountId:'treasury.near',dao:null,confidential:false,balances:{near:'0',usdc:'0'},payees:[]}:null,held:[],unresolved:[],'inbox/list':[],'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':options.agreements?[{id:'a',payee:'payee.near',amount:'1000000',status:'requested',origin:'payee',at:new Date().toISOString()}]:[],activity:[],'owner/pending':[],'owner/actions':[],policyHistory:[],'autopilot/get':{on:false,everyMin:60,maxUsd:10},'autopilot/evidence':{ticks:[]},'strategy/get':options.ready?{strategy:{targetBps:{usdc:10000},minLegUsd:1,maxCostBps:100,autopilot:{everyMin:60,maxUsd:10}},digest:'fixture-strategy',grantSuffix:'fixture',executor:true,on:false,grantMatches:true,unresolved:0,grant:setup.grant,observedAt:new Date().toISOString(),readiness:{state:'off',canEnable:true,reasons:[]}}:{},pay:{outcome:'sent',status:'PENDING_APPROVAL'},'treasury/unlink':null,'agreements/decline':null};if(options.values)Object.assign(values,options.values);if(options.notInForce)values.overview.notInForce=options.notInForce;if(options.policy)values.overview.policy.policy={...values.overview.policy.policy,...options.policy};if(options.revision)values.overview.policy.revision=options.revision;if(options.digest)values.overview.digest=options.digest;if(options.approvalUnknown)values.overview.policy.policy.owner_approval=undefined;return r.fulfill({json:{json:rpcValue(values, m)}});}
 if(p.startsWith('/static/'))return r.fulfill({path:root+p,contentType:p.endsWith('.js')?'application/javascript':p.endsWith('.css')?'text/css':'font/woff2'});return r.fulfill({path:root+'/index.html',contentType:'text/html'});});await page.goto('http://frontend.test'+path);if(options.gatewayError)await page.getByRole('alert').waitFor();else if(!options.fast)await page.getByRole('heading',{level:1}).waitFor();return {page,calls,requests,release:()=>releaseDelayed(),recover:()=>failedGateway=false};}
 async function recipient(page) {
  const summary=page.locator('summary').filter({hasText:/^Send money to a payee$/});
@@ -37,7 +37,7 @@ async function check(name,work){
 }
 await check('agreement forms expose labelled controls',async()=>{
  const {page}=await pageFor('/a/payables/payees');
- await page.getByText('Offer terms (a purchase order, a bounty or grant award)',{exact:true}).click();
+ await page.getByText('Offer terms (a bounty, grant award or service agreement)',{exact:true}).click();
  await page.getByText('Add a payee without agreement terms',{exact:true}).click();
  await page.locator('[name=offer-payee]').waitFor();
  return page.locator('input,select,textarea').evaluateAll(controls=>{
@@ -83,7 +83,7 @@ await check('long failure code wraps outside its short status badge',async()=>{
  return await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);
 });
 await check('7 date validation',async()=>{const {page,calls}=await pageFor('/a/payables/payees',{agreements:true});await page.getByLabel('Terms hold until',{exact:true}).fill('');await page.getByRole('button',{name:'Agree to these terms'}).click();return !calls.includes('agreements/propose')&&await page.locator('input[type=date][aria-invalid=true]').count()>0;});
-await check('10 draft guard',async()=>{const {page}=await pageFor('/a/payables/payees');await page.getByText('Offer terms (a purchase order, a bounty or grant award)',{exact:true}).click();const draftInput=page.locator('[name=offer-payee]');await draftInput.fill('draft.near');let guarded=false;page.on('dialog',async d=>{guarded=true;await d.dismiss();});await page.getByRole('navigation',{name:'Area utilities',exact:true}).getByRole('link',{name:'Balances & funding',exact:true}).click();await page.waitForTimeout(100);return guarded&&/\/payees\/?$/.test(page.url())||{guarded,url:page.url()};});
+await check('10 draft guard',async()=>{const {page}=await pageFor('/a/payables/payees');await page.getByText('Offer terms (a bounty, grant award or service agreement)',{exact:true}).click();const draftInput=page.locator('[name=offer-payee]');await draftInput.fill('draft.near');let guarded=false;page.on('dialog',async d=>{guarded=true;await d.dismiss();});await page.getByRole('navigation',{name:'Area utilities',exact:true}).getByRole('link',{name:'Balances & funding',exact:true}).click();await page.waitForTimeout(100);return guarded&&/\/payees\/?$/.test(page.url())||{guarded,url:page.url()};});
 await check('bootstrap failure is announced and retry restores the public page',async()=>{
  const {page,recover}=await pageFor('/',{gatewayError:true,public:true});
  await page.getByRole('alert').waitFor();
@@ -126,7 +126,7 @@ await check('return review and unlink cancellation do not submit',async()=>{
  return !calls.includes('pay')&&!calls.includes('treasury/unlink');
 });
 await check('validation focuses the first field and names the error',async()=>{
- const {page,calls}=await pageFor('/a/payables/payees');await page.getByText('Offer terms (a purchase order, a bounty or grant award)',{exact:true}).click();await page.getByRole('button',{name:'Offer',exact:true}).click();
+ const {page,calls}=await pageFor('/a/payables/payees');await page.getByText('Offer terms (a bounty, grant award or service agreement)',{exact:true}).click();await page.getByRole('button',{name:'Offer',exact:true}).click();
  const payee=page.locator('[name=offer-payee]');await page.waitForFunction(()=>document.activeElement.getAttribute('name')==='offer-payee');
  return !calls.includes('agreements/offer')&&await payee.evaluate(e=>e===document.activeElement&&e.getAttribute('aria-invalid')==='true'&&Boolean(document.getElementById(e.getAttribute('aria-describedby'))?.textContent));
 });
@@ -150,7 +150,7 @@ await check('startup announces loading before the gateway responds',async()=>{
 });
 await check('light/dark input and focus contrast',async()=>{
  const {page}=await pageFor('/a/payables/payees');
- await page.getByText('Offer terms (a purchase order, a bounty or grant award)',{exact:true}).click();
+ await page.getByText('Offer terms (a bounty, grant award or service agreement)',{exact:true}).click();
  for(const scheme of ['light','dark']){
   await page.emulateMedia({colorScheme:scheme});await page.waitForTimeout(50);
   const field=page.locator('[name=offer-payee]');await field.focus();
@@ -166,7 +166,7 @@ await check('light/dark input and focus contrast',async()=>{
 await check('expanded agreement, funding and policy forms fit mobile and desktop',async()=>{
  for(const path of ['/a/payables/payees','/a/treasury/funding','/a/treasury/policy']){
   const {page}=await pageFor(path);
-  if(path.endsWith('/payees'))await page.getByText('Offer terms (a purchase order, a bounty or grant award)',{exact:true}).click();
+  if(path.endsWith('/payees'))await page.getByText('Offer terms (a bounty, grant award or service agreement)',{exact:true}).click();
   if(path.endsWith('/funding'))await recipient(page);
   if(path.endsWith('/policy'))await page.getByRole('button',{name:'Edit',exact:true}).click();
   await assertResponsive(page,path);

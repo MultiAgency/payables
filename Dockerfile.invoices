@@ -1,0 +1,15 @@
+# Standalone contributor app. The existing legacy payout executor keeps its own service and volume.
+FROM node:24-slim
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY tsconfig.json ./
+COPY src ./src
+COPY web ./web
+COPY evidence ./evidence
+RUN pnpm build:web
+COPY deploy ./deploy
+ENV NODE_ENV=production DASHBOARD_FILE=/app/deploy/invoices.json TRUST_PROXY=true
+EXPOSE 8080
+CMD ["sh", "/app/deploy/invoices-entrypoint.sh"]

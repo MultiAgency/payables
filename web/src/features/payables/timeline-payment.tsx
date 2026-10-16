@@ -25,6 +25,7 @@ import { refusalText } from "../../shared/words";
 
 import { paymentOwnerState } from "./payment-owner-state";
 import { WorkOrders } from "./work-orders";
+import { CompensationReview } from "./compensation-owner";
 
 /**
  * Payments held for the owner, each as a timeline that doubles as its receipt, approved or rejected in
@@ -259,7 +260,7 @@ export function Payments({ title = "Payments", historyOpen = false, compact = fa
   const denied = [held, pending, activity, history, ownerActions, agreementQuery].find(query => accessDenied(query.error));
   if (denied?.error) return <Section title={title}><QueryError error={denied.error} retry={() => denied.refetch()} /></Section>;
   return (
-    <><Section
+    <>{showQueue && <CompensationReview />}<Section
       title={title}
       description={showQueue ? "Review held payouts, invoice changes and unconfirmed outcomes. Open a record to check its current status." : "Owner approval and payment completion are separate. Missing evidence remains unverified."}
     >

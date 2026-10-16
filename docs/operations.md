@@ -12,6 +12,9 @@ source. The lease coordinates processes on one host only.
 For the separate, opt-in self-service Payables host, use the [candidate rollout and state-preservation
 instructions](payables-self-service.md). Preserve its full `.payables/` tree alongside existing state.
 
+For the report-to-isolated-payout candidate, use the [release handoff](release-report-payout.md).
+It retains the existing production gates and distinguishes local checks from hosted acceptance.
+
 ## Work-order executors
 
 Work-order support is locally implemented and offline-tested, not deployed or mainnet-observed.

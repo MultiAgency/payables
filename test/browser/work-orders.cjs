@@ -17,7 +17,7 @@ async function ownerWorkOrder(browser, root) {
     instance: { agentId: 'fixture', executor: false }, setup: { ...setup, dao: { id: 'fixture.sputnik-dao.near', owner: setup.owner } }, overview: overview(kind),
     'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'agreements/list': [], invoices: [], activity: [],
     'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true }, 'autopilot/get': { on: false },
-    'workOrders/list': records,
+    'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': records,
     'workOrders/get': { order: records[0], agentId: null, wallet: null, balance: null, policyReady: false,
       grant: null, invoice: null, ownerActions: [], approval: null, error: null },
   }; } });

@@ -49,7 +49,7 @@ async function delayedRunReceipt(browser, root) {
         instance: { agentId: tick.agentId, executor: true }, setup: { ...setup, executor: true }, overview: overview('treasury'),
         'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 },
         'autopilot/evidence': { ticks: [state.receipt === 'available' ? tick : { ...tick, end: null }] },
-        held: [], unresolved: [], activity: [], 'inbox/list': [], 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
+        held: [], unresolved: [], activity: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
       };
       return route.fulfill({ json: { json: rpcValue(values, method) } });
     }
