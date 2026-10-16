@@ -88,6 +88,10 @@ These are catalog targets, not established guarantees. Evidence stages describe 
 
 ## Gaps
 
+- Contributor-proposed work orders and the optional consolidated Invoices owner entry are prepared
+  locally; see [Invoices portal](contributor-portal.md). Owner decline, counteroffers and archival
+  for these proposed work orders are not built. Hosted and mainnet verification remain outstanding.
+
 - The running brief’s [known limitations](#known-limitations) include agreement-term enforcement and
   the public council roster.
 - A payee must be able to receive confidentially: the provider documents that a confidential transfer's

@@ -1,0 +1,20 @@
+{
+  "candidate": "payables-standalone-rollback-20261015",
+  "imageId": "sha256:74d4ec2b6e653b9db3a549772f3690ddd7786c6e7f2436a54bd19fae526f4f29",
+  "originalDeploymentId": "083e4cd0-c940-4480-a3c7-cf3756319edf",
+  "originalProviderImageDigest": "sha256:83c83624bbba29aeb6a0eb62e34a8e08f85de56424b6a9fe07773fbfc0f5b9c0",
+  "provenance": "Locally rebuilt rollback fallback; 137 captured deployed application files match. Not the original provider image or a claim of identical dependency/OS layers.",
+  "validation": "Passed image-hash/canonical-auth/static-asset/two-start synthetic preservation check, network none, no production mount.",
+  "artifacts": {
+    "payables-standalone-rollback-20261015.source.tgz": {
+      "sha256": "187c85f77c82868965a556b91ef5f2589c1c405306ea9381524c718da5b31a5a",
+      "bytes": 960469,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-rollback-20261015.source.tgz"
+    },
+    "payables-standalone-rollback-20261015.image.tar": {
+      "sha256": "dc8933bbfc0083f9b6106111b853af631e15e35e7bcb0035e05fe8509a4c78ca",
+      "bytes": 816441856,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-rollback-20261015.image.tar"
+    }
+  }
+}

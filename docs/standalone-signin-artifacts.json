@@ -1,0 +1,39 @@
+{
+  "candidate": "payables-standalone-signin-20261015-r1",
+  "dateUTC": "2026-10-15",
+  "backendBaseline": "adf71a8f39d5a098fbad8f5ff9b4dcfd7615d031",
+  "backendChangedFiles": [
+    "src/gateway/server.ts",
+    "src/gateway/config.ts",
+    "src/gateway/signing-host.ts"
+  ],
+  "imageId": "sha256:db759c6b837500c453c92bf0e1049b785ca5359754509c31499afb3684a24122",
+  "configurationDelta": {
+    "standaloneGatewayOnly": {
+      "DASHBOARD_SIGNIN_HOSTS": "payables-production.up.railway.app"
+    },
+    "canonicalHost": "payables.multiagency.ai"
+  },
+  "artifacts": {
+    "payables-standalone-signin-20261015-r1.source.tgz": {
+      "sha256": "7d78247a1e3d48a781fff52192e2e5915f07cfe5f15e5cd36363708df1a81e94",
+      "bytes": 1569827,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-signin-20261015-r1.source.tgz"
+    },
+    "payables-standalone-signin-20261015-r1.image.tar": {
+      "sha256": "dca07601ecd482019f7702ba2f279386bae5392705c23d43415c59a5bed81428",
+      "bytes": 816440832,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-signin-20261015-r1.image.tar"
+    }
+  },
+  "manifestSha256": "b642fae78879d46c4625917e4086209f5d4e064bb8eba7fffff59b2fba0c6239",
+  "validation": {
+    "typecheck": "passed",
+    "offlineTests": {
+      "pass": 732,
+      "fail": 0
+    },
+    "imageCheck": "passed: 137 hashes, network none, two synthetic-state starts",
+    "liveAcceptance": "pending authorization"
+  }
+}

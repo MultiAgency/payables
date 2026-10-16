@@ -1,0 +1,58 @@
+{
+  "candidate": "payables-standalone-signin-20261015-r2",
+  "supersedes": "payables-standalone-signin-20261015-r1",
+  "dateLocal": "2026-10-15 America/New_York",
+  "backendBaseline": "adf71a8f39d5a098fbad8f5ff9b4dcfd7615d031",
+  "deployedBaseline": {
+    "deploymentId": "083e4cd0-c940-4480-a3c7-cf3756319edf",
+    "imageDigest": "sha256:83c83624bbba29aeb6a0eb62e34a8e08f85de56424b6a9fe07773fbfc0f5b9c0",
+    "observedAt": "2026-10-16T01:12:10.342Z"
+  },
+  "backendChangedFiles": [
+    "src/gateway/config.ts",
+    "src/gateway/server.ts",
+    "src/gateway/signing-host.ts"
+  ],
+  "imageId": "sha256:46531194c4490ca9629437cd5866fdc48e2ff9bc4ae34817709e25b7440b5edf",
+  "configurationDelta": {
+    "standaloneGatewayOnly": {
+      "DASHBOARD_SIGNIN_HOSTS": "payables-production.up.railway.app"
+    },
+    "canonicalHost": "payables.multiagency.ai",
+    "preserveServiceConfiguration": true
+  },
+  "artifacts": {
+    "payables-standalone-signin-20261015-r2.source.tgz": {
+      "sha256": "69a60aac1197c708873600be17f6107e68bd51ba9d8b771d93c9201f102d4d7d",
+      "bytes": 1577303,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-signin-20261015-r2.source.tgz"
+    },
+    "payables-standalone-signin-20261015-r2.image.tar": {
+      "sha256": "2faa8ee52fc73ef73650ff3b98dac4a7222c39826404cfa7bcc113a6c69f174c",
+      "bytes": 816443904,
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-standalone-signin-20261015-r2.image.tar"
+    }
+  },
+  "manifestSha256": "41148a7fb4e5bc19199cb927f58dd460e3af7ea93ee004693d1f3575298172ce",
+  "validation": {
+    "dateLocal": "2026-10-15 America/New_York",
+    "typecheck": "passed",
+    "offlineTests": {
+      "passed": 732,
+      "failed": 0
+    },
+    "imageCheck": {
+      "runtimeHashes": 138,
+      "network": "none",
+      "productionVolume": false,
+      "starts": 2,
+      "result": "passed"
+    },
+    "publicFrontendComparison": {
+      "filesPerHost": 28,
+      "hosts": 2,
+      "allMatch": true
+    },
+    "liveAcceptance": "not performed; requires authorization and owner-controlled sign-in"
+  }
+}

@@ -1,3 +1,4 @@
+import { canSetupPayables } from "./app/gateway-contract";
 import { clearAgentCapabilities, gatewayQueries, redactProposalCaches } from "./app/queries";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { StrictMode, Suspense, lazy, useSyncExternalStore } from "react";
@@ -67,7 +68,7 @@ function GatewayPage({ activity }: { activity: boolean }) {
       .filter(([name]) => !deniedAt(access, `/a/${name}`))) },
   } : gateway;
   const content = gateway && !gateway.viewer ? (
-    <PublicHome daos={ownersOf(gateway.agents)} invoices={gateway.invoices} selfService={gateway.selfService} />
+    <PublicHome daos={ownersOf(gateway.agents)} invoices={gateway.invoices} selfService={canSetupPayables(gateway)} />
   ) : (
     <AuthenticatedApp gateway={visibleGateway} activity={activity} />
   );

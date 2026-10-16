@@ -1,0 +1,749 @@
+{
+  "observedAt": "2026-10-16T01:12:10.342Z",
+  "deploymentId": "083e4cd0-c940-4480-a3c7-cf3756319edf",
+  "productionImageDigest": "sha256:83c83624bbba29aeb6a0eb62e34a8e08f85de56424b6a9fe07773fbfc0f5b9c0",
+  "productionFiles": {
+    "src/agent.ts": "5b65d31702fbca8b13b069467d15629b4c050c1616ac47321ae0dadb82af278f",
+    "src/agreements.ts": "d6336ad0bb3082615ba8519d704ea5e4319063d63c6a8761f45529e94a5b0c4c",
+    "src/agui.ts": "e20e1979b53c05d93de1def013ef1a0ff05ff77f85eaa564396f83594166c58c",
+    "src/api.ts": "3b219fd04a9fd26bb5bbc449f1eb87da4f8d55b74fac1518766bead0383b2101",
+    "src/archive.ts": "5c783312a57a1b700fcfdeb0329fcef08c1c182372e50d224cf83aecaad6f367",
+    "src/area.ts": "8841c8981b7a600493b30746cd4c84227ac2abf28f95280f0f73184b4203ac08",
+    "src/authorize.ts": "24d1802c8dcdde0ecef555e31b52e2abf0e13d81a21fb5c2380e9a58e29fc331",
+    "src/autopilot.ts": "fba269a9f8274223b80f4f036f2ba1bf822863009167142d5b1485f7856834c9",
+    "src/books.ts": "d66ca5e7956f035943d4300ec76ceead31da1ec335732ac9d81a97646450a4e8",
+    "src/budget-window.ts": "a10f7d9c6fc75239ac7c818324779166610c9f3af4e89c18937e6f7197048b83",
+    "src/chain.ts": "34897211c19756a8aa77e54f0d744a4098ce42615e90fce60818ceb49d020fb7",
+    "src/create-agent.ts": "81fb56bab5513b91de3ecb8ae5d287b9d26d0b25873c836766ddc9baf3e22f4c",
+    "src/dao-owner.ts": "cc20140285eacc8a1e0dc6b1071d68de10e4c70c96eadf3520152801b1588f30",
+    "src/dashboard-holdings.ts": "ed182da9c825a364fd2ff3e855737d4adec72fd950624aa4df7cd8f3fb34ed9d",
+    "src/demo-check.ts": "7e68172fd1f577dac8717b4dbe8d314fb88c7f99a15fc1ba115c5b8e257887bd",
+    "src/env.ts": "a95723c6ba4505b23a8b2e922e72f08bef384adf5d501a9d9568d8922887248f",
+    "src/evidence.ts": "e8c847b00bbb35ecc49261ee5d794c3bb18f39b12b0b3e48aa18afc916e5035b",
+    "src/executor-lease.ts": "0c6ada16c7184e35c6112aac20af7767aa1b50f4ecd72fdcfe1bc959b588376f",
+    "src/executor-lifecycle.ts": "0cd0d104d2036f04ced3222b3d4201ae493fcdf29f5c0ae985ca3799ee7ce622",
+    "src/gateway/allowlist.ts": "312167d7df1136d589370266b71caf2f98f7468005f4a5e2ef85a6bf6182abbc",
+    "src/gateway/config.ts": "c88625ab0fa9b84384252eb6e6f021bf45f3dd46b6f74380eb79885d37c2f08d",
+    "src/gateway/platform-payables.ts": "8c7b8b344dc73dce30fb108134a445f9a804e5041e917b74b3b8547f81aac34f",
+    "src/gateway/proposals.ts": "faf63358d666f5218fb70a3f4e5e0db5df3a041d4fbc1993d5b826e49cbde54d",
+    "src/gateway/provisioning.ts": "de1bf9b738d9195cd356a8763db75d1803d847b41f8309f60b66a253d7ea2a98",
+    "src/gateway/roles.ts": "9b3484587a27a16f5f4c902ba227be22202c71ce0606dea9852221431c153c35",
+    "src/gateway/server.ts": "f02f1ecade99993ef0fdf1cbc20d81969b4015258e6c7549bb9fcc8026290a01",
+    "src/gateway/sign-requests.ts": "397823a7371e4635aaa236ad7215707a87677b2cb363eaf681616acf83cf2650",
+    "src/grants.ts": "b0fcb893e56f82ec258beece2fa1879df1981c5e32bb173aeb54890c6d5cc6a5",
+    "src/holdings.ts": "387da4ac7d3321ce3ccd04f5e808dc161c2f12b00be11a5c6ea11560ee4fd2a5",
+    "src/http.ts": "38d67457070a75b74b5c74115fe7d7071bfd2b03c05957f2592819a53bee5258",
+    "src/inbox.ts": "e1c4de13f99883afc55e0af7dd5ff3b199591ee0c60cb5c085fc638de2ddd5fb",
+    "src/inspect.ts": "02721d9f010f2a394afe8b3caee47ca2caf74a0cd0920f4cfaab90b5a9d7a4fd",
+    "src/intents-account.ts": "8e88f6f41de28fdb48fa49243ccb4e0035dc7823586931658922927cf92f8fea",
+    "src/invoice-browser.js": "30b6f854ce2668eec7d857cd390b9c350a9cb9e3125e75c0b0bc3a2140235580",
+    "src/invoice-http.ts": "a94824aa2168cf8f3fef13e2c9f1e56f51e57b8ff3df81b93a00110868fdaeb0",
+    "src/invoice-page.ts": "e77aece1727daaf7536aaedf0e3a8ec099d6f224901fc3ba422a38968353a27c",
+    "src/invoice-store.ts": "f97bf8ba9b171d6d5f35c832f6d683fe530a229d2c12c29636775da52d525696",
+    "src/invoices-server.ts": "e59164974eafa6371ae94cea667b46c1e46e94fdfc57b4bca2c5955590503ce5",
+    "src/invoices.ts": "d8eecd427062fafdb2b1bcd289d1b5aadc473183044445d11fdf38f20445391d",
+    "src/issue-grant.ts": "22c08af260b63248da58bef68a3bcfd26fb2b1ad1fd9cf678641ff61c30a1408",
+    "src/journal-history.ts": "557c7f78268351fbbe1bb706bed84062fe4b8930ff37873c4006c7a87e9b489a",
+    "src/ledger.ts": "2637df445595156b55b4d623aa59b9911662c6390cc2c024ff819dd6a021ea4f",
+    "src/llm.ts": "68a1f78c4d1a49a5f178aa1ed5486f4a53facb274caf9276ecb9e38f43306570",
+    "src/lock.ts": "15ad05795bdbf2d4ffd14949a6c0ae192ec93b7565f86eefc10a585a6d6c3f26",
+    "src/mandate.ts": "7a0cd68b57074163d7eecad1a4f31b12670edc9add735c7e810dbd0ab46b4fbf",
+    "src/nep413.ts": "506d2345b84fe39df05ff0d74da168c6405bd89c2d12d0a35f373152a3146c81",
+    "src/notify.ts": "a48f76d46add13c9e39fb3fd9cf335aabe8d97af28818c7fe73535effb2cdc0f",
+    "src/ops.ts": "fbc276efae77a09682449fedc745a63ce86e36b14b9cf7fe5d260321bb465b3d",
+    "src/owner-intents.ts": "8838dd9162b9c0cf55e18de2e2a5fd9d7e9ddaff71174f5db0cb9bbacbf95bf3",
+    "src/owner-requests.ts": "8912148c749ba1c2dbd8b37e50abb2064403c0ab2cbde0b4e420a8ee6dfbe1ad",
+    "src/owner-signature.ts": "ed8255b030b8f7724845f26e8eec1a704001aeff9ada0094abf97e1e9a3f7609",
+    "src/owner.ts": "f9da1648cec4818d6dce5350a167e48249a75cc579ec7ceb70f285bd56b53776",
+    "src/payment-approval.ts": "04280a1b80cee67f2a71987f9a110a319ef8353c5d0891f54f6cc87447800186",
+    "src/payouts.ts": "2437379e7201136e6e84a910d6e2a740e9bfffde836c5db4a258e6108b0218ed",
+    "src/planning/checks.ts": "d6456049c22f6695a078947179927b88d8e21a8174b65e44d201b9c2b11079ac",
+    "src/planning/execution.ts": "99255ce85b038fdd532a9992efbd06ebc65e7941a60232170f06eaff776cd583",
+    "src/planning/model.ts": "35e293169a56bdfb46e925d16e0bcd4d5ce280310ba087efbbdbb6d0f7515377",
+    "src/planning/observation.ts": "d49164e912456723c2f348fbaac7f1fe869a4593517fc579ededc96cb367d71a",
+    "src/planning/store.ts": "9941b35ed2d98d5c7e960fa127821cba2c81c148e95019006b6cb9df15eb9802",
+    "src/plans.ts": "e75723fa12f1f852d86bc50b49ba337390f8a42c0d24195f15cc86968fcf9353",
+    "src/policy.ts": "20cf6be39c904490ba14f8729df2b61be93e37a01aacbedbc296224314dff898",
+    "src/provider-display.ts": "e384b326a1ab4383470ead488ec887e16b1fc19ffd1d9f557671c6708bdad9cf",
+    "src/reconcile.ts": "cb5a1f9e0a068e7194084b42377a4f6232a639d0b446407d0ad99a68d7e630ff",
+    "src/record-lines.ts": "42909eaf79fe695c0bf37478d398e39804cd6002df1fdee15436e117355e8144",
+    "src/recover.ts": "11b9d9bb3017f7a0d87f6785bb0c9666a49c0a27d8bf52dc032f596f7310ab99",
+    "src/remote.ts": "5a6039a94e21b0cf6f7b923f85224c1b263873630eecc617b07547e7d1e6183e",
+    "src/report.ts": "376fb91ae04d491d6acb58b8a40f44f08325e1a5103daa94bc8f29b2d7f21c8d",
+    "src/revoke-grant.ts": "d718d3664f7d53cf2b959998831ae93b4e308a45bd43fd6365b1c77d635c5eca",
+    "src/router.ts": "bf8341715da4c0c67704bfd7a7f7b9ca828e794436774dd309d7fe51fc7cee5b",
+    "src/rpc/base.ts": "b54838d3573815f029e5021bc8af9abc094a36553d91e7d4763bc211371ccf5a",
+    "src/rpc/inputs.ts": "4efaa5ff97a6d00018ebe6e37ffb6441dc64275f1cb17ac5e5eee3e181883577",
+    "src/rpc/observations.ts": "eab7c4ee2fa9a1a91c9884a71f2d5a0957a46781cfca382c9c9d219ac1241ee0",
+    "src/rpc/owner.ts": "96b62f94a7cd4c29672bff31ee2aba88e9192503f75ea0379722569010430bce",
+    "src/rpc/payables.ts": "3860d606b8b6fd69dd828946bdc607e9d58eea12f07401ea8a235eb10abbae84",
+    "src/rpc/treasury.ts": "b2fd963699a8eb9665ca0fa7ef2854e5812d06d9ff10342097f99f6ea3721104",
+    "src/rpc/work-orders.ts": "e39b8aafa7e3179ae940e1726a33c5b370fc1a39b9a9cea7012efd56b3b11c77",
+    "src/run-log-export.ts": "84b4d856f81344fcd464beb2823308dee1c06bf2768b21dbd54001e175a99fd4",
+    "src/run-log-schema.ts": "26e1a2b92797f60af52e2bd13f956eb8e9242225e1f84b710700d3de774f276d",
+    "src/run-progress-schema.ts": "5eead5bde373e8f058f7f42cf588c4a71e1960d5d7097e0381384c03f6a4bbfb",
+    "src/run-progress.ts": "cad9c9c211ca24a95aa22694343719fd5fd0f1391a306e00ae8369ef55389f9d",
+    "src/run-report.ts": "2014ef57949642ce6d932f270b2ec506a30a4182c8cd77dec5a292faeb3b694e",
+    "src/server.ts": "1254388e9caca7ba9c94f515ca06df8f3a1aced76516b93b9f1fd97bf66e01b6",
+    "src/signin.ts": "7c12c501324e2cb7510f4d1dab3eac865ede8657188f304973ba2355416bf957",
+    "src/smoke.ts": "78af5e8285a0e82d769edb94f3e9987875a2c2e77a1e549c6790f142bf4dc917",
+    "src/strategy-controls.ts": "a928229fb1b146ac68627423d32094ed4d9acc928ce52ab7bfea471bae4d4336",
+    "src/strategy-digest.ts": "cca84a965317430381a9491fb794db5de5c87a7d0fbdedad67398d898f5975bf",
+    "src/strategy-readiness.ts": "32d0895a944f01a4704920f51e8eff881b4d3ae4a728addea8520d036d1fa9e6",
+    "src/strategy-status.ts": "e77023e4c5ef770ed937c659c6b122ecd98dcd8b46d0c639d56f4500d239d0e0",
+    "src/strategy-value.ts": "a63d08f1ff99e94a79af8fd4818b35efb6e2a631131fa16e86b904bd7d3987ec",
+    "src/strategy.ts": "ea0d25d5982a1c021320d05fd07c34bcfe865517ac077d40c88ddd4455f0c0d0",
+    "src/synced.ts": "1fb6a01eb8e9eb0ea9f8224323e74618c48459a69c6f232d861e858772d72bd7",
+    "src/treasury.ts": "ce168c53556c4af075e366c168194c4f7495faf8a170bbdb3ca9885d0c7a3f6f",
+    "src/update-policy.ts": "184a4efe7eda55adf6917d9643c5c19c223b3acc2b62c6c92ffdea953183439b",
+    "src/valuation.ts": "b18ccf3089b6d76c61deb06ae7d85015de148f9126ec163e9c560d93a8bb85e4",
+    "src/value.ts": "158d3bcd011f86b994c1137832db738523ee9724cae1845868143dbe499dff8d",
+    "src/work-order-binding.ts": "184054e259680257e8aa0e37ef23602b1abf27b7231f80d47c15df80c5a322cb",
+    "src/work-order-pool.ts": "e8519c9d163d8ddc6859e7271b32a19b009b94e32246278c6e22ff5eb0952d85",
+    "src/work-order-protocol.ts": "5e22a156c853402da6517aeb91e16369372a4a0443d7323e914836c91eed8c41",
+    "src/work-order-runtime.ts": "c7dd50c81f59afa6c21c32183434e7df785e9b054bc86b0305e115b76fbd7b7f",
+    "src/work-order-store.ts": "161072ab944333c3fe40a5b59d0bd0f0a7d1f128aec067606ddd42402ff1727c",
+    "src/work-order-worker.ts": "f0446a72a1a71d661406e12ee5f1edc227a6b677dd5cb055a3a31b50f96bce92",
+    "src/work-orders.ts": "62990a439f46051dabb3c38e4d3d07ba88a6fe8bc56ffd9e0cc980eca93fa56f",
+    "web/dist/index.html": "62490ed33364d7c215717fbc44bfe738cc7ed90c6a6fdb8353e2a27ae59a518a",
+    "web/dist/static/css/index.b3e1e15fef.css": "e0a01110205b1ab4dc63d856474e6aeaede006cf2cf78dcf33ea69765ac0776c",
+    "web/dist/static/font/geist-cyrillic-ext-wght-normal.8bbfa6e01a.woff2": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e",
+    "web/dist/static/font/geist-cyrillic-wght-normal.12b57c6bea.woff2": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09",
+    "web/dist/static/font/geist-latin-ext-wght-normal.b921df2685.woff2": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f",
+    "web/dist/static/font/geist-latin-wght-normal.9ff55a8a96.woff2": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
+    "web/dist/static/font/geist-mono-cyrillic-ext-wght-normal.85d55428a3.woff2": "cd8800999070b729e1cc0bf7a48da6c3ac096a044251171b9a7574b56d96d4b4",
+    "web/dist/static/font/geist-mono-cyrillic-wght-normal.33900800d4.woff2": "4866787fc952dbdbd591d6923d67bc21c2d894b93f34ab69d0cdf25d47bfb2df",
+    "web/dist/static/font/geist-mono-latin-ext-wght-normal.3d379059be.woff2": "1a189eb997c3e2ece68373e387afaec9e8617424186c4b1ab3cff7c54ba6223b",
+    "web/dist/static/font/geist-mono-latin-wght-normal.125b055e86.woff2": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc",
+    "web/dist/static/font/geist-mono-symbols2-wght-normal.b6529aae0e.woff2": "5bb66d8319ba1602bb2eb67dce8d79c2b4687be8ce183a0574433e949b3c60ad",
+    "web/dist/static/font/geist-mono-vietnamese-wght-normal.55bad67b15.woff2": "d39b60889a94a527a7f73c7988a2d6efb6c081614aef683b0b386c02d74c2175",
+    "web/dist/static/font/geist-vietnamese-wght-normal.c6a3f4e555.woff2": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1",
+    "web/dist/static/font/inter-cyrillic-ext-wght-normal.460bdf14be.woff2": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+    "web/dist/static/font/inter-cyrillic-wght-normal.491cbc05ce.woff2": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+    "web/dist/static/font/inter-greek-ext-wght-normal.23aae5683d.woff2": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+    "web/dist/static/font/inter-greek-wght-normal.4449bf7aab.woff2": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+    "web/dist/static/font/inter-latin-ext-wght-normal.3835a68e46.woff2": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+    "web/dist/static/font/inter-latin-wght-normal.6c596dfcdd.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+    "web/dist/static/font/inter-vietnamese-wght-normal.113a630f76.woff2": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+    "web/dist/static/js/async/o.07a6a5c904.js": "d4566804b43bc5f20d7f0cbe608354568dd22048d1d9c8ffdfecdf576731696c",
+    "web/dist/static/js/async/v.63de021612.js": "68fe49fd67b7d6340704fece9e9e9a9736c48827696a82da932775181f0e667e",
+    "web/dist/static/js/async/v.63de021612.js.LICENSE.txt": "18da93e2caeff5b4506decf4ba17236977b57740b6a4df1509b4c42f0a9610c0",
+    "web/dist/static/js/async/y.598233ed24.js": "2eba818dab44f8dab924bbe5add11cb20b7bc6a5b0e186777106d23b6ad98d5c",
+    "web/dist/static/js/index.d9de5acfed.js": "92d3fe0398e0056846951782c8357262f2cda4c12a89a75539e539fb23741651",
+    "web/dist/static/js/lib-react.593e14ddf0.js": "d54ee9740a7df0557b318e590beacd31e84e69a7c76115533a03550362f84714",
+    "web/dist/static/js/lib-react.593e14ddf0.js.LICENSE.txt": "e47a413b62a5bf023d2b81a25d0ef4213ff1bb756df7f3c31ba57f88334e1e0f",
+    "web/dist/static/js/r.9fb1a2093e.js": "873966a854ae10e90f277fa58e79dde558d378fc7784a63e386b65fb2c807821",
+    "deploy/dashboard-entrypoint.sh": "6f71eb277ac1c22c62955b9c373f52b4018267e52e7762c41327e0a51d233119",
+    "deploy/dashboard.json": "8f651728d0c129125bb3cf0a9aecd4fc597ecf8bec14e099dda0f22e1c6982ea",
+    "deploy/payables.json": "bf248029c9c81f6a11317a5306b2148a9c400ca348e2c9d6e9d38b7e6262f22f",
+    "package.json": "2bca776609875a7045ee9694d57b9004c0770be2731d6a347fcd2dd51823714e",
+    "pnpm-lock.yaml": "3ae5b950cb373424532c98f52206f53fd788d0780207ee4823340d85f67b8dea",
+    "pnpm-workspace.yaml": "42378193e79367dbc00ecd1f06e3cd2537cb81737326e755383dece289230dd9",
+    "tsconfig.json": "382a3e413bf9a7f4032251ff2fa6e5a535e1b42b61481ac050d2fc2af74172ef"
+  },
+  "r2RuntimeDifferences": [
+    "src/gateway/config.ts",
+    "src/gateway/server.ts",
+    "src/gateway/signing-host.ts"
+  ],
+  "r1Differences": [
+    {
+      "file": "src/gateway/config.ts",
+      "production": "c88625ab0fa9b84384252eb6e6f021bf45f3dd46b6f74380eb79885d37c2f08d",
+      "r1": "7b5e1e9c678d66df55ddcd5a264bda55b70ee8267b6372125fb2951d1c5bb9db"
+    },
+    {
+      "file": "src/gateway/server.ts",
+      "production": "f02f1ecade99993ef0fdf1cbc20d81969b4015258e6c7549bb9fcc8026290a01",
+      "r1": "5c22cbfca07e245ab4fdc0d23ebad60e875530143ec128a4e69ef76ada8a40f9"
+    },
+    {
+      "file": "src/gateway/signing-host.ts",
+      "production": null,
+      "r1": "4c4f85d68a32a09b44436c83e7ddc3b20d9c236960ae65469f0b28eb9ab249e9"
+    },
+    {
+      "file": "tsconfig.json",
+      "production": "382a3e413bf9a7f4032251ff2fa6e5a535e1b42b61481ac050d2fc2af74172ef",
+      "r1": null
+    },
+    {
+      "file": "web/dist/index.html",
+      "production": "62490ed33364d7c215717fbc44bfe738cc7ed90c6a6fdb8353e2a27ae59a518a",
+      "r1": "3f303281d6ccc21a10c062c7b4c1d81dfa7bb533648ea33eb5870c580e948c19"
+    },
+    {
+      "file": "web/dist/static/js/async/v.63de021612.js",
+      "production": "68fe49fd67b7d6340704fece9e9e9a9736c48827696a82da932775181f0e667e",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/async/v.63de021612.js.LICENSE.txt",
+      "production": "18da93e2caeff5b4506decf4ba17236977b57740b6a4df1509b4c42f0a9610c0",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/async/v.87a72e6d24.js",
+      "production": null,
+      "r1": "bf83cf02a12c8c8aa643afef46869557e300f428e03aa507b69af6d31437e220"
+    },
+    {
+      "file": "web/dist/static/js/async/v.87a72e6d24.js.LICENSE.txt",
+      "production": null,
+      "r1": "18da93e2caeff5b4506decf4ba17236977b57740b6a4df1509b4c42f0a9610c0"
+    },
+    {
+      "file": "web/dist/static/js/async/y.598233ed24.js",
+      "production": "2eba818dab44f8dab924bbe5add11cb20b7bc6a5b0e186777106d23b6ad98d5c",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/async/y.dbec7a2f62.js",
+      "production": null,
+      "r1": "9943c82767df28e690de4fef2210dfc2534a878cb16466084ae46f84ff9a629c"
+    },
+    {
+      "file": "web/dist/static/js/b.62c95d023c.js",
+      "production": null,
+      "r1": "dc53bb00ee2276900562fd919bbee6ae4b19dc6d602c2b86c6cf69cdb59e8003"
+    },
+    {
+      "file": "web/dist/static/js/index.93bed4ba17.js",
+      "production": null,
+      "r1": "3006fba2bf5669ff61bcf21f7b6330786eb4aa092f43c845baab0dcbd7a3a937"
+    },
+    {
+      "file": "web/dist/static/js/index.d9de5acfed.js",
+      "production": "92d3fe0398e0056846951782c8357262f2cda4c12a89a75539e539fb23741651",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/lib-react.593e14ddf0.js",
+      "production": "d54ee9740a7df0557b318e590beacd31e84e69a7c76115533a03550362f84714",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/lib-react.593e14ddf0.js.LICENSE.txt",
+      "production": "e47a413b62a5bf023d2b81a25d0ef4213ff1bb756df7f3c31ba57f88334e1e0f",
+      "r1": null
+    },
+    {
+      "file": "web/dist/static/js/lib-react.ec66468247.js",
+      "production": null,
+      "r1": "9eb2977f383b37da5e271a0c4c04b7ca25af74fa01491e58b7575888a5396f87"
+    },
+    {
+      "file": "web/dist/static/js/lib-react.ec66468247.js.LICENSE.txt",
+      "production": null,
+      "r1": "e47a413b62a5bf023d2b81a25d0ef4213ff1bb756df7f3c31ba57f88334e1e0f"
+    },
+    {
+      "file": "web/dist/static/js/r.9fb1a2093e.js",
+      "production": "873966a854ae10e90f277fa58e79dde558d378fc7784a63e386b65fb2c807821",
+      "r1": null
+    }
+  ],
+  "effectiveGatewayConfiguration": {
+    "DASHBOARD_FILE": "/app/deploy/payables.json",
+    "DASHBOARD_HOST": "payables.multiagency.ai",
+    "DASHBOARD_SIGNIN_HOSTS": null,
+    "DASHBOARD_AREA": null,
+    "EXECUTOR": null,
+    "PORT": "8080",
+    "NODE_ENV": "production",
+    "TRUST_PROXY": "true",
+    "APP_DIR": null,
+    "DATA_DIR": null
+  },
+  "node": "v24.22.0",
+  "deploymentServiceManifest": {
+    "build": {
+      "buildCommand": null,
+      "buildEnvironment": "V3",
+      "builder": "DOCKERFILE",
+      "dockerfilePath": "/Dockerfile",
+      "nixpacksConfigPath": null,
+      "nixpacksPlan": null,
+      "watchPatterns": []
+    },
+    "deploy": {
+      "cronSchedule": null,
+      "drainingSeconds": null,
+      "healthcheckPath": null,
+      "healthcheckTimeout": null,
+      "ipv6EgressEnabled": false,
+      "limitOverride": null,
+      "multiRegionConfig": {
+        "us-west2": {
+          "numReplicas": 1
+        }
+      },
+      "numReplicas": 1,
+      "overlapSeconds": null,
+      "preDeployCommand": null,
+      "preDeployTimeoutSeconds": null,
+      "region": null,
+      "registryCredentials": null,
+      "requiredMountPath": null,
+      "restartPolicyMaxRetries": 10,
+      "restartPolicyType": "ON_FAILURE",
+      "runtime": "V2",
+      "sleepApplication": false,
+      "startCommand": null,
+      "useLegacyStacker": false
+    }
+  },
+  "propertyFileMapping": {
+    "build.builder": "$.build.builder",
+    "build.dockerfilePath": "$.build.dockerfilePath",
+    "deploy.healthcheckPath": "$.deploy.healthcheckPath",
+    "deploy.numReplicas": "$.deploy.numReplicas",
+    "deploy.restartPolicyMaxRetries": "$.deploy.restartPolicyMaxRetries",
+    "deploy.restartPolicyType": "$.deploy.restartPolicyType"
+  },
+  "serviceConfigurationDifferencesFromR1": {
+    "deploy.healthcheckPath": {
+      "productionMetadata": null,
+      "r1": "/health",
+      "r2": null
+    },
+    "deploy.restartPolicyMaxRetries": {
+      "productionMetadata": 10,
+      "r1": 5,
+      "r2": 10
+    }
+  },
+  "configurationDelta": {
+    "DASHBOARD_SIGNIN_HOSTS": {
+      "production": null,
+      "planned": "payables-production.up.railway.app"
+    },
+    "DASHBOARD_HOST": {
+      "production": "payables.multiagency.ai",
+      "planned": "unchanged"
+    }
+  },
+  "publicComparison": {
+    "files": [
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/index.html",
+        "status": 200,
+        "sha256": "62490ed33364d7c215717fbc44bfe738cc7ed90c6a6fdb8353e2a27ae59a518a",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/css/index.b3e1e15fef.css",
+        "status": 200,
+        "sha256": "e0a01110205b1ab4dc63d856474e6aeaede006cf2cf78dcf33ea69765ac0776c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-cyrillic-ext-wght-normal.8bbfa6e01a.woff2",
+        "status": 200,
+        "sha256": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-cyrillic-wght-normal.12b57c6bea.woff2",
+        "status": 200,
+        "sha256": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-latin-ext-wght-normal.b921df2685.woff2",
+        "status": 200,
+        "sha256": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-latin-wght-normal.9ff55a8a96.woff2",
+        "status": 200,
+        "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-cyrillic-ext-wght-normal.85d55428a3.woff2",
+        "status": 200,
+        "sha256": "cd8800999070b729e1cc0bf7a48da6c3ac096a044251171b9a7574b56d96d4b4",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-cyrillic-wght-normal.33900800d4.woff2",
+        "status": 200,
+        "sha256": "4866787fc952dbdbd591d6923d67bc21c2d894b93f34ab69d0cdf25d47bfb2df",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-latin-ext-wght-normal.3d379059be.woff2",
+        "status": 200,
+        "sha256": "1a189eb997c3e2ece68373e387afaec9e8617424186c4b1ab3cff7c54ba6223b",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-latin-wght-normal.125b055e86.woff2",
+        "status": 200,
+        "sha256": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-symbols2-wght-normal.b6529aae0e.woff2",
+        "status": 200,
+        "sha256": "5bb66d8319ba1602bb2eb67dce8d79c2b4687be8ce183a0574433e949b3c60ad",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-mono-vietnamese-wght-normal.55bad67b15.woff2",
+        "status": 200,
+        "sha256": "d39b60889a94a527a7f73c7988a2d6efb6c081614aef683b0b386c02d74c2175",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/geist-vietnamese-wght-normal.c6a3f4e555.woff2",
+        "status": 200,
+        "sha256": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-cyrillic-ext-wght-normal.460bdf14be.woff2",
+        "status": 200,
+        "sha256": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-cyrillic-wght-normal.491cbc05ce.woff2",
+        "status": 200,
+        "sha256": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-greek-ext-wght-normal.23aae5683d.woff2",
+        "status": 200,
+        "sha256": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-greek-wght-normal.4449bf7aab.woff2",
+        "status": 200,
+        "sha256": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-latin-ext-wght-normal.3835a68e46.woff2",
+        "status": 200,
+        "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-latin-wght-normal.6c596dfcdd.woff2",
+        "status": 200,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/font/inter-vietnamese-wght-normal.113a630f76.woff2",
+        "status": 200,
+        "sha256": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/async/o.07a6a5c904.js",
+        "status": 200,
+        "sha256": "d4566804b43bc5f20d7f0cbe608354568dd22048d1d9c8ffdfecdf576731696c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/async/v.63de021612.js",
+        "status": 200,
+        "sha256": "68fe49fd67b7d6340704fece9e9e9a9736c48827696a82da932775181f0e667e",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/async/v.63de021612.js.LICENSE.txt",
+        "status": 200,
+        "sha256": "18da93e2caeff5b4506decf4ba17236977b57740b6a4df1509b4c42f0a9610c0",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/async/y.598233ed24.js",
+        "status": 200,
+        "sha256": "2eba818dab44f8dab924bbe5add11cb20b7bc6a5b0e186777106d23b6ad98d5c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/index.d9de5acfed.js",
+        "status": 200,
+        "sha256": "92d3fe0398e0056846951782c8357262f2cda4c12a89a75539e539fb23741651",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/lib-react.593e14ddf0.js",
+        "status": 200,
+        "sha256": "d54ee9740a7df0557b318e590beacd31e84e69a7c76115533a03550362f84714",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/lib-react.593e14ddf0.js.LICENSE.txt",
+        "status": 200,
+        "sha256": "e47a413b62a5bf023d2b81a25d0ef4213ff1bb756df7f3c31ba57f88334e1e0f",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables.multiagency.ai",
+        "file": "web/dist/static/js/r.9fb1a2093e.js",
+        "status": 200,
+        "sha256": "873966a854ae10e90f277fa58e79dde558d378fc7784a63e386b65fb2c807821",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/index.html",
+        "status": 200,
+        "sha256": "62490ed33364d7c215717fbc44bfe738cc7ed90c6a6fdb8353e2a27ae59a518a",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/css/index.b3e1e15fef.css",
+        "status": 200,
+        "sha256": "e0a01110205b1ab4dc63d856474e6aeaede006cf2cf78dcf33ea69765ac0776c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-cyrillic-ext-wght-normal.8bbfa6e01a.woff2",
+        "status": 200,
+        "sha256": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-cyrillic-wght-normal.12b57c6bea.woff2",
+        "status": 200,
+        "sha256": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-latin-ext-wght-normal.b921df2685.woff2",
+        "status": 200,
+        "sha256": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-latin-wght-normal.9ff55a8a96.woff2",
+        "status": 200,
+        "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-cyrillic-ext-wght-normal.85d55428a3.woff2",
+        "status": 200,
+        "sha256": "cd8800999070b729e1cc0bf7a48da6c3ac096a044251171b9a7574b56d96d4b4",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-cyrillic-wght-normal.33900800d4.woff2",
+        "status": 200,
+        "sha256": "4866787fc952dbdbd591d6923d67bc21c2d894b93f34ab69d0cdf25d47bfb2df",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-latin-ext-wght-normal.3d379059be.woff2",
+        "status": 200,
+        "sha256": "1a189eb997c3e2ece68373e387afaec9e8617424186c4b1ab3cff7c54ba6223b",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-latin-wght-normal.125b055e86.woff2",
+        "status": 200,
+        "sha256": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-symbols2-wght-normal.b6529aae0e.woff2",
+        "status": 200,
+        "sha256": "5bb66d8319ba1602bb2eb67dce8d79c2b4687be8ce183a0574433e949b3c60ad",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-mono-vietnamese-wght-normal.55bad67b15.woff2",
+        "status": 200,
+        "sha256": "d39b60889a94a527a7f73c7988a2d6efb6c081614aef683b0b386c02d74c2175",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/geist-vietnamese-wght-normal.c6a3f4e555.woff2",
+        "status": 200,
+        "sha256": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-cyrillic-ext-wght-normal.460bdf14be.woff2",
+        "status": 200,
+        "sha256": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-cyrillic-wght-normal.491cbc05ce.woff2",
+        "status": 200,
+        "sha256": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-greek-ext-wght-normal.23aae5683d.woff2",
+        "status": 200,
+        "sha256": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-greek-wght-normal.4449bf7aab.woff2",
+        "status": 200,
+        "sha256": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-latin-ext-wght-normal.3835a68e46.woff2",
+        "status": 200,
+        "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-latin-wght-normal.6c596dfcdd.woff2",
+        "status": 200,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/font/inter-vietnamese-wght-normal.113a630f76.woff2",
+        "status": 200,
+        "sha256": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/async/o.07a6a5c904.js",
+        "status": 200,
+        "sha256": "d4566804b43bc5f20d7f0cbe608354568dd22048d1d9c8ffdfecdf576731696c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/async/v.63de021612.js",
+        "status": 200,
+        "sha256": "68fe49fd67b7d6340704fece9e9e9a9736c48827696a82da932775181f0e667e",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/async/v.63de021612.js.LICENSE.txt",
+        "status": 200,
+        "sha256": "18da93e2caeff5b4506decf4ba17236977b57740b6a4df1509b4c42f0a9610c0",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/async/y.598233ed24.js",
+        "status": 200,
+        "sha256": "2eba818dab44f8dab924bbe5add11cb20b7bc6a5b0e186777106d23b6ad98d5c",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/index.d9de5acfed.js",
+        "status": 200,
+        "sha256": "92d3fe0398e0056846951782c8357262f2cda4c12a89a75539e539fb23741651",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/lib-react.593e14ddf0.js",
+        "status": 200,
+        "sha256": "d54ee9740a7df0557b318e590beacd31e84e69a7c76115533a03550362f84714",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/lib-react.593e14ddf0.js.LICENSE.txt",
+        "status": 200,
+        "sha256": "e47a413b62a5bf023d2b81a25d0ef4213ff1bb756df7f3c31ba57f88334e1e0f",
+        "matchesDeployedFile": true
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "file": "web/dist/static/js/r.9fb1a2093e.js",
+        "status": 200,
+        "sha256": "873966a854ae10e90f277fa58e79dde558d378fc7784a63e386b65fb2c807821",
+        "matchesDeployedFile": true
+      }
+    ],
+    "challenges": [
+      {
+        "host": "payables.multiagency.ai",
+        "status": 200,
+        "recipient": "payables.multiagency.ai"
+      },
+      {
+        "host": "payables-production.up.railway.app",
+        "status": 200,
+        "recipient": "payables.multiagency.ai"
+      }
+    ]
+  },
+  "registrySummary": {
+    "exists": false,
+    "sha256": null,
+    "version": null,
+    "registrationCount": 0,
+    "allRegisteredSettingsPresent": null
+  },
+  "effectiveStandaloneFile": {
+    "host": "payables.multiagency.ai",
+    "selfService": {
+      "maxAgents": 10,
+      "firstPort": 9000
+    },
+    "agents": []
+  }
+}

@@ -1,14 +1,12 @@
 import { SignIn as SignInIcon, SignOut } from "@phosphor-icons/react";
-import type { Area } from "../../../src/area.js";
+import { readGateway } from "./gateway-contract";
+export type { Gateway, GatewayAgent } from "./gateway-contract";
+import type { Gateway, GatewayAgent } from "./gateway-contract";
 import { useState } from "react";
 import { errorMessage, gw } from "../shared/lib";
 import { Button, Card, ErrorBox, Spinner } from "../shared/ui";
-import { type GatewayViewer, useViewer } from "./viewer";
+import { useViewer } from "./viewer";
 import { signChallenge, signOutMember } from "../features/owner/wallet";
-
-/** An agent behind the gateway and the account it answers to; `dao` when that account is a DAO, signing by proposal. */
-export type GatewayAgent = { name: string; owner: string; dao: boolean; area?: Area; managed?: boolean; invoices?: string };
-export type Gateway = { agents: GatewayAgent[]; invoices: string | null; viewer: GatewayViewer | null; selfService?: boolean };
 
 /** The agents' owners, each once, in order. Signed out, the gateway lists only DAOs' agents, so these are DAOs. */
 export const ownersOf = (agents: GatewayAgent[]) => [...new Set(agents.map((a) => a.owner))];
@@ -19,15 +17,7 @@ export const ownersOf = (agents: GatewayAgent[]) => [...new Set(agents.map((a) =
  * throws: a hosted page must never fall back to the trusted local view on loopback.
  */
 export async function loadGateway(): Promise<Gateway | null> {
-  const response = await fetch("/gw/me");
-  if (!response.headers.get("content-type")?.includes("application/json")) {
-    if (response.ok) return null;
-    // A proxy's error page in front of a gateway that is down, not a local server.
-    throw new Error(`The dashboard answered ${response.status}.`);
-  }
-  const body = (await response.json()) as Gateway & { error?: string };
-  if (!response.ok) throw new Error(body.error ?? `The dashboard answered ${response.status}`);
-  return body;
+  return readGateway(await fetch("/gw/me"), location);
 }
 
 export async function signOut() {

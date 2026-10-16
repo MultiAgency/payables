@@ -8,6 +8,10 @@ labeled example walkthroughs. Regular NEAR accounts and eligible Sputnik DAO mem
 real operations require separate owner signatures. End-to-end self-service money flows remain
 unverified on the hosted demo.
 
+The locally prepared [Invoices portal](docs/contributor-portal.md) adds contributor work-order
+requests and a separate consolidated owner entry. Contributor intake and owner review reuse the
+existing work-order authorization and payment flow. Hosted verification remains outstanding.
+
 This repository starts from the independently deployed Payables source. It inherits the Agentic
 Treasury executor and its documentation below; historical observations about other hosts do not
 establish evidence for this standalone deployment. The frontend uses MultiAgency branding and

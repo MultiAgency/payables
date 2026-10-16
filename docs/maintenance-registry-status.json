@@ -1,0 +1,23 @@
+{
+  "selectedRegistry": "ghcr.io",
+  "selectedNamespace": "multiagency",
+  "proposedTag": "ghcr.io/multiagency/payables-maintenance:20261015-r1",
+  "reviewedImageId": "sha256:f38941d9cf638f724a0d5c010c45fa62b7867a46107384374fab3248833ceec3",
+  "exportSha256": "8965b2895d1e5b3a7e44e62d6b0949c5c645970931cd070f8c7583b4a8d092c7",
+  "establishedDestinationDiscovered": false,
+  "destinationSelectedByOwner": true,
+  "dockerGhcrCredentialPresent": false,
+  "githubPackageDiscoveryStatus": 403,
+  "githubRepositoryAdmin": true,
+  "publishingAccessVerified": false,
+  "publicationAuthorization": "pending explicit private publication approval",
+  "visibility": "private; selected by owner",
+  "published": false,
+  "immutableRegistryDigest": null,
+  "railwayRegistryRetrievalVerified": false,
+  "railwayDeploymentPullVerified": false,
+  "rebuilt": false,
+  "productionMutations": [],
+  "runbook": "docs/maintenance-registry-publication.md",
+  "railwayPullAuthentication": "not configured or verified; requires supported plan and read-only package access"
+}

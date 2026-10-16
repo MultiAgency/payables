@@ -1,0 +1,6 @@
+{
+  "host": "invoices.multiagency.ai",
+  "portal": "invoices",
+  "selfService": { "maxAgents": 10, "firstPort": 9000 },
+  "agents": []
+}

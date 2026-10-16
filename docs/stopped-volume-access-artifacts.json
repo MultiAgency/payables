@@ -1,0 +1,35 @@
+{
+  "candidate": "payables-volume-maintenance-20261015-r1",
+  "imageId": "sha256:f38941d9cf638f724a0d5c010c45fa62b7867a46107384374fab3248833ceec3",
+  "providerCliVersion": "5.41.3",
+  "providerCliSourceCommit": "e8e02a71bfc2afd85aa967e0b007107c016e2a54",
+  "defaultCommand": [
+    "sleep",
+    "infinity"
+  ],
+  "applicationCodePresent": false,
+  "localPreservationProof": {
+    "uidGid": true,
+    "modes": true,
+    "hardlinksAndSymlinks": true,
+    "posixAcl": true,
+    "userBinaryXattr": true,
+    "sqliteDbWalShm": true,
+    "network": "none",
+    "productionData": false
+  },
+  "providerHandoff": "not exercised; release gate pending authorization",
+  "artifacts": {
+    "payables-volume-maintenance-20261015-r1.source.tgz": {
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-volume-maintenance-20261015-r1.source.tgz",
+      "bytes": 13017,
+      "sha256": "1cf77f94c6b1089619b026384fe5061dc4108cfe7606a10f2c925689ab779820"
+    },
+    "payables-volume-maintenance-20261015-r1.image.tar": {
+      "path": "/Users/jlwaugh/agencies/payables/.test-artifacts/payables-volume-maintenance-20261015-r1.image.tar",
+      "bytes": 236902400,
+      "sha256": "8965b2895d1e5b3a7e44e62d6b0949c5c645970931cd070f8c7583b4a8d092c7"
+    }
+  },
+  "productionActions": []
+}

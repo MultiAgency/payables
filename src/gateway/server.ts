@@ -1,4 +1,6 @@
 import { platformAuthenticated, platformPayables, platformRequest, PlatformAccessDenied } from "./platform-payables.js";
+import { contributorPortalPage } from "../contributor-portal-page.js";
+import { signingHost } from "./signing-host.js";
 import { createHmac } from "node:crypto";
 import { ProvisioningStore, provisioningEnv, reservationInput } from "./provisioning.js";
 import { type ChildProcess, spawn } from "node:child_process";
@@ -29,6 +31,7 @@ const fleet = [...config.agents, ...reserved.values()];
 const PORT = Number(process.env.PORT ?? 8800);
 /** The host members sign in to; DASHBOARD_HOST overrides it, e.g. to test on a provider's domain before DNS moves. */
 const HOST = hostOf(process.env.DASHBOARD_HOST || config.host);
+const signInHost = signingHost(HOST, process.env.DASHBOARD_SIGNIN_HOSTS);
 /** Where the app is installed, apart from the working directory, which holds the agents' state. */
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const DIST = join(APP, "web/dist");
@@ -106,10 +109,14 @@ createServer(async (req, res) => {
     if (req.method !== "GET" && crossSite(req)) return json(res, 403, { error: "Cross-site request" });
 
     if (pathname === "/health") return json(res, 200, { ok: true });
+    if (config.portal === "invoices" && req.method === "GET" &&
+        (pathname === "/contributors" || pathname === "/" && !session.account(req))) {
+      return res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }).end(contributorPortalPage());
+    }
 
-    if (pathname === "/gw/challenge" && req.method === "GET") return json(res, ...challengeAnswer(HOST, mayChallenge(clientAddress(req))));
+    if (pathname === "/gw/challenge" && req.method === "GET") return json(res, ...challengeAnswer(signInHost(req.headers.host), mayChallenge(clientAddress(req))));
     if (pathname === "/gw/session" && req.method === "POST") {
-      const account = await verifySignIn(parseSignIn(await readJson(req)), HOST, chainKeyLookup).catch((error: Error) => error);
+      const account = await verifySignIn(parseSignIn(await readJson(req)), signInHost(req.headers.host), chainKeyLookup).catch((error: Error) => error);
       if (account instanceof Error) return json(res, 401, { error: account.message });
       const access = await resolveAccess(account, fleet);
       if (!config.selfService && !Object.keys(access).length) return json(res, 403, { error: `${account} doesn't own any agent here, nor is a member of a DAO that does` });
@@ -247,6 +254,7 @@ function start(agent: AgentEntry & { envFile: string }, delay = 5_000) {
     cwd: reserved.get(agent.name)?.directory,
     env: reserved.has(agent.name) ? { ...provisioningEnv(reserved.get(agent.name)!),
       INVOICES_PUBLIC_HOST: HOST, INVOICES_BASE_PATH: `/requests/${agent.name}`, INVOICES_SECURE: "true",
+      ...(config.portal === "invoices" && { INVOICES_OWNER_URL: `https://${HOST}/owners` }),
       INVOICES_COOKIE: `invoices_${agent.name}`, INVOICES_SESSION_SECRET: createHmac("sha256", SECRET).update(`invoice:${agent.name}`).digest("hex"),
     } : childEnv(agent),
     stdio: ["ignore", "inherit", "inherit"],

@@ -1,5 +1,6 @@
 import { invoiceBrowser, invoicePage } from "./invoice-page.js";
-import { randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { z } from "zod";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { agentId } from "./env.js";
 import { agreements, localStore, requestAgreement } from "./agreements.js";
@@ -32,7 +33,7 @@ const LOOPBACK = HOST === "127.0.0.1" || HOST === "localhost";
 const PUBLIC_HOST = process.env.INVOICES_PUBLIC_HOST ?? (LOOPBACK ? `localhost:${PORT}` : "");
 /** Signs session cookies. A loopback instance may use a throwaway one: its sessions end with it. */
 const SECRET = process.env.INVOICES_SESSION_SECRET ?? (LOOPBACK ? randomBytes(32).toString("base64") : "");
-const TITLE = process.env.INVOICES_TITLE ?? "Submit an invoice";
+const TITLE = process.env.INVOICES_TITLE ?? "Contributor portal";
 const AGREEMENTS_SECRET = process.env.AGREEMENTS_SECRET ?? "";
 const store = localStore(agreed);
 
@@ -45,6 +46,38 @@ const session = sessions({ cookie: process.env.INVOICES_COOKIE ?? "invoices_sess
 /** Attempts allowed per hour: sign-ins per address, invoices per signed-in account. */
 const LIMITS = { signin: hourlyLimit(10), file: hourlyLimit(10) };
 const allowed = (kind: keyof typeof LIMITS, who: string) => LIMITS[kind](who);
+
+const contributorOrder = z.object({ submission: z.uuid(), amount: z.string(), note: z.string().trim().min(1).max(200), until: z.iso.datetime() }).strict();
+// Serialize public intake across awaited owner reads, so parallel requests cannot bypass slot limits.
+let orderIntake = Promise.resolve();
+function requestWorkOrder(payee: string, raw: unknown) {
+  const run = orderIntake.then(async () => {
+    const parsed = contributorOrder.safeParse(raw);
+    if (!parsed.success) throw new BadRequest("Enter an amount, work description and deadline. Work order recipients are fixed to your signed-in account.");
+    const draft = parsed.data;
+    const valid = validate({ ...draft, payee });
+    if ("invalid" in valid) throw new BadRequest(`Check the ${valid.invalid}.`);
+    // Scope the retained client identity to this account; another payee cannot probe or claim it.
+    const hex = createHash("sha256").update(JSON.stringify([payee, draft.submission])).digest("hex");
+    const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+    const orders = listWorkOrders(agentId());
+    const known = orders.find(order => order.id === id);
+    if (known) {
+      if (known.payee !== payee || known.amount !== valid.amount || known.note !== valid.note || known.until !== draft.until)
+        return { conflict: true } as const;
+      return { id, status: "requested" } as const;
+    }
+    if (Date.parse(draft.until) <= Date.now() || Date.parse(draft.until) > Date.now() + 365 * 86_400_000)
+      throw new BadRequest("Choose a future deadline within 365 days.");
+    const active = orders.filter(order => Date.parse(order.until) > Date.now());
+    if (active.length >= 50 || active.filter(order => order.payee === payee).length >= 3) return { full: true } as const;
+    // This records proposed terms only. Agent creation, grant and payment approval remain owner-signed.
+    await localWorkOrders(agentId(), { type: "create", input: { id, payee, amount: valid.amount, note: valid.note, until: draft.until } });
+    return { id, status: "requested" } as const;
+  });
+  orderIntake = run.then(() => undefined, () => undefined);
+  return run;
+}
 
 export const invoiceHandler = async (req: IncomingMessage, res: ServerResponse) => {
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value);
@@ -61,7 +94,7 @@ export const invoiceHandler = async (req: IncomingMessage, res: ServerResponse) 
         "content-security-policy",
         "frame-ancestors 'none'; default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https:; connect-src 'self' https: wss:; frame-src https:; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'",
       );
-      return res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(invoicePage(TITLE, process.env.INVOICES_BASE_PATH ?? ""));
+      return res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(invoicePage(TITLE, process.env.INVOICES_BASE_PATH ?? "", process.env.INVOICES_OWNER_URL ?? ""));
     }
     if (req.method === "GET" && url.pathname === "/invoice-browser.js")
       return res.writeHead(200, { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-cache" }).end(invoiceBrowser);
@@ -102,6 +135,15 @@ export const invoiceHandler = async (req: IncomingMessage, res: ServerResponse) 
     if (req.method === "GET" && url.pathname === "/api/work-orders") {
       const orders = listWorkOrders(agentId()).filter(order => order.payee === payee);
       return send(res, 200, { orders: orders.map(({ id, amount, note, until, createdAt }) => ({ id, amount, note, until, createdAt })) });
+    }
+    if (req.method === "POST" && url.pathname === "/api/work-orders") {
+      const body = await readJson(req);
+      if (!contributorOrder.safeParse(body).success) throw new BadRequest("Enter an amount, work description and deadline. Work order recipients are fixed to your signed-in account.");
+      if (!allowed("file", payee!)) return send(res, 429, { error: "Too many attempts. Try again later." });
+      const result = await requestWorkOrder(payee!, body);
+      if ("conflict" in result) return send(res, 409, { error: "This request already has different terms. Review the existing work order before starting another." });
+      if ("full" in result) return send(res, 429, { error: "The work order request queue is full. Review your existing requests or contact the owner." });
+      return send(res, 200, result);
     }
     const workOrder = url.pathname.match(/^\/api\/work-orders\/([0-9a-f-]{36})(\/file)?$/);
     if (workOrder && (req.method === "GET" || req.method === "POST")) {

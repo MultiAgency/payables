@@ -37,8 +37,9 @@ export const AGREEMENT_WORDS: Record<Exclude<AgreementStatus, "filed">, string> 
   declined: "The DAO declined this request.",
 };
 
-export function invoicePage(title: string, base = "") {
+export function invoicePage(title: string, base = "", ownerUrl = "") {
   if (base && !/^\/requests\/pay-[0-9a-f]{24}$/.test(base)) throw new Error("Invalid invoice page scope");
+  if (ownerUrl && !/^https?:$/.test(new URL(ownerUrl).protocol)) throw new Error("Invalid owner workspace URL");
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escape(title)}</title>
@@ -47,7 +48,7 @@ export function invoicePage(title: string, base = "") {
 :root{--bg:oklch(0.99 0.003 251);--card:oklch(1 0 0);--fg:oklch(0.22 0.02 251);--muted:oklch(0.5 0.016 251);--line:oklch(0.92 0.006 251);--strong:oklch(0.78 0.012 251);--accent:oklch(0.25 0.035 252);--on-accent:oklch(0.99 0 0);--ok-bg:oklch(0.96 0.035 158);--ok:oklch(0.38 0.09 158);--warn-bg:oklch(0.97 0.04 85);--warn:oklch(0.44 0.1 60);--chip:oklch(0.965 0.005 251)}
 @media (prefers-color-scheme:dark){:root{--bg:oklch(0.16 0.012 251);--card:oklch(0.2 0.014 251);--fg:oklch(0.96 0.004 251);--muted:oklch(0.72 0.012 251);--line:oklch(1 0 0 / 10%);--strong:oklch(1 0 0 / 22%);--accent:oklch(0.96 0.004 251);--on-accent:oklch(0.2 0.02 252);--ok-bg:oklch(0.27 0.05 158);--ok:oklch(0.86 0.1 158);--warn-bg:oklch(0.29 0.05 70);--warn:oklch(0.9 0.1 85);--chip:oklch(1 0 0 / 8%)}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 ui-sans-serif,system-ui,sans-serif}
-main{max-width:36rem;margin:0 auto;padding:40px 16px;display:flex;flex-direction:column;gap:20px}
+main{max-width:48rem;margin:0 auto;padding:40px 16px;display:flex;flex-direction:column;gap:20px}
 h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin:0}h2{font-size:17px;font-weight:600;margin:0}p{margin:0;color:var(--muted)}
 label{display:flex;flex-direction:column;gap:6px;font-size:14px}
 input{font:inherit;color:inherit;background:transparent;border:1px solid var(--strong);border-radius:999px;height:44px;padding:0 16px}
@@ -59,17 +60,39 @@ button:disabled{opacity:.5;cursor:default}.card{background:var(--card);border:1p
 .chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
 ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}ul.items li{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)}ul.items li:first-child{border-top:0;padding-top:0}
 .when{font-size:13px;color:var(--muted)}.notice{border-radius:12px;padding:12px 16px;font-size:14px;background:var(--warn-bg);color:var(--warn)}
+a{color:var(--fg);text-underline-offset:4px}nav{display:flex;flex-wrap:wrap;gap:12px 24px;padding:16px 0;border-bottom:1px solid var(--line)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:4px}button:hover:not(:disabled){filter:brightness(.9)}
+input{border-radius:10px;min-width:0;width:100%;caret-color:var(--fg)}input::placeholder{color:var(--muted);opacity:1}
+::selection{background:var(--accent);color:var(--on-accent)}.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fields .wide{grid-column:1/-1}
+h3{font-size:15px;margin:0}.intro{max-width:65ch}.account{overflow-wrap:anywhere}section{scroll-margin-top:20px}
+@media(max-width:520px){main{padding:24px 16px}.card{padding:20px}.fields{grid-template-columns:1fr}}
 [hidden]{display:none!important}code{word-break:break-all}
 </style></head><body><main>
 <h1>${escape(title)}</h1>
-<p>Sign in with the NEAR account you want to be paid to, enter the USDC amount, and submit. After approval, follow the invoice status until it shows Paid.</p>
+${ownerUrl ? `<a href="${escape(ownerUrl)}">Owner workspace · all your agents</a>` : ""}
+<p class="intro">Agree on the work. Request a payout. Follow it through approval to payment, all with the NEAR account you want to receive funds.</p>
+<div class="row account" id="portal-session" hidden><span>Signed in as <code id="account"></code></span><button class="link" id="signout">Sign out</button></div>
+<nav aria-label="Contributor tasks"><a href="#request-work">Request a work order</a><a href="#work-orders-card">Your work orders</a><a href="#step-invoice">Request a payout</a><a href="#list">Payout history</a></nav>
 <section class="card" id="step-signin">
 <p>Your wallet signs a message proving you control the account. It doesn't send a transaction or spend anything.</p>
 <button id="signin">Sign in with NEAR</button>
 </section>
+<section class="card" id="request-work" hidden aria-labelledby="request-work-title">
+<h2 id="request-work-title">Request a work order</h2>
+<p>Propose the work, a fixed USDC amount and a deadline. The owner reviews these terms and signs the authorization before you can request payment. Saving a request moves no funds.</p>
+<form id="work-request-form">
+<div class="fields">
+<label class="wide">Describe the work<input id="work-request-note" required maxlength="200" autocomplete="off" placeholder="Design and deliver the contributor guide"></label>
+<label>Work order total (USDC)<input id="work-request-amount" required inputmode="decimal" autocomplete="off" placeholder="250"></label>
+<label>Deadline (UTC)<input id="work-request-until" required type="date"></label>
+</div>
+<p id="work-request-message" role="status"></p>
+<button id="work-request-submit" type="submit">Send work order request</button>
+</form>
+</section>
 <section class="card" id="work-orders-card" hidden aria-labelledby="work-orders-title">
 <h2 id="work-orders-title">Your work orders</h2>
-<p>File an invoice against fixed terms. Each payment still needs the owner's approval.</p>
+<p>Review proposed terms and authorization, then request a payout from a funded work order. Each payment still needs the owner's approval.</p>
 <button id="work-orders-check">Check work orders</button>
 <ul class="items" id="work-orders-list"></ul>
 <div id="work-order-detail" hidden>
@@ -79,7 +102,8 @@ ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}u
 <p id="work-order-error" role="alert"></p>
 </section>
 <section class="card" id="step-invoice" hidden>
-<div class="row"><span>Signed in as <code id="account"></code></span><span class="chip" id="agreed-chip"></span><button class="link" id="signout">Sign out</button></div>
+<h2>Request a payout</h2>
+<div class="row"><span class="chip" id="agreed-chip"></span></div>
 <p id="not-agreed" class="notice" hidden>The DAO hasn't agreed to pay this account yet. Submitting sends it a request; you're paid only after it agrees and you file the invoice.</p>
 <section id="agreements-card" hidden><h2>Your agreements</h2><ul class="items" id="agreements"></ul></section>
 <label>Amount (USDC)<input id="amount" inputmode="decimal" autocomplete="off" placeholder="250"></label>
@@ -90,7 +114,7 @@ ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}u
 <p id="refresh-status"></p>
 <p id="refresh-error" role="alert"></p>
 <button id="refresh" hidden>Check invoice status again</button>
-<section class="card" id="list" hidden><h2>Your invoices</h2><ul class="items" id="invoices"></ul><p id="none" hidden>None yet.</p></section>
+<section class="card" id="list" hidden><h2>Your payouts</h2><ul class="items" id="invoices"></ul><p id="none" hidden>No payouts requested yet. Request a payout above, or file against an authorized work order.</p></section>
 <script type="module">
 import { mountInvoicePage } from "${base}/invoice-browser.js";
 import { NearConnector } from "https://cdn.jsdelivr.net/npm/@fastnear/near-connect@0.14.1/+esm";

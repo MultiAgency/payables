@@ -5,7 +5,7 @@
  * @typedef {Awaited<ReturnType<typeof import("./invoices.js").mine>>[number]} Invoice
  * @typedef {Omit<import("./agreements.js").Agreement, "payee" | "status"> & {status: Exclude<import("./agreements.js").AgreementStatus, "filed">}} Agreement
  * @typedef {{invoices: Invoice[], agreements: Agreement[], agreed: boolean}} InvoiceList
- * @typedef {{"work-orders-card": HTMLElement, "work-orders-list": HTMLElement, "work-orders-check": HTMLButtonElement, "work-order-detail": HTMLElement, "work-order-note": HTMLElement, "work-order-terms": HTMLElement, "work-order-status": HTMLElement, "work-order-error": HTMLElement, "work-order-file": HTMLButtonElement, amount: HTMLInputElement, note: HTMLInputElement, submit: HTMLButtonElement, signin: HTMLButtonElement, signout: HTMLButtonElement, refresh: HTMLButtonElement, account: HTMLElement, error: HTMLElement, "step-signin": HTMLElement, "step-invoice": HTMLElement, list: HTMLElement, "not-agreed": HTMLElement, "agreed-chip": HTMLElement, "agreements-card": HTMLElement, agreements: HTMLElement, invoices: HTMLElement, none: HTMLElement, "refresh-error": HTMLElement, "refresh-status": HTMLElement}} Elements
+ * @typedef {{"request-work": HTMLElement, "work-request-form": HTMLFormElement, "work-request-note": HTMLInputElement, "work-request-amount": HTMLInputElement, "work-request-until": HTMLInputElement, "work-request-submit": HTMLButtonElement, "work-request-message": HTMLElement, "work-orders-card": HTMLElement, "work-orders-list": HTMLElement, "work-orders-check": HTMLButtonElement, "work-order-detail": HTMLElement, "work-order-note": HTMLElement, "work-order-terms": HTMLElement, "work-order-status": HTMLElement, "work-order-error": HTMLElement, "work-order-file": HTMLButtonElement, amount: HTMLInputElement, note: HTMLInputElement, submit: HTMLButtonElement, signin: HTMLButtonElement, signout: HTMLButtonElement, refresh: HTMLButtonElement, account: HTMLElement, error: HTMLElement, "step-signin": HTMLElement, "step-invoice": HTMLElement, list: HTMLElement, "not-agreed": HTMLElement, "agreed-chip": HTMLElement, "agreements-card": HTMLElement, agreements: HTMLElement, invoices: HTMLElement, none: HTMLElement, "refresh-error": HTMLElement, "refresh-status": HTMLElement}} Elements
  */
 
 /**
@@ -74,7 +74,10 @@ export async function mountInvoicePage(connector, WORDS, AGREEMENT_WORDS, base =
     $("submit").disabled = false;
     $("step-signin").hidden = !!account; $("step-invoice").hidden = !account; $("list").hidden = !account;
     $("account").textContent = account || "";
+    const identity = document.getElementById("portal-session");
+    if (identity) identity.hidden = !account;
     resetWorkOrders(account);
+    resetWorkRequest(account);
     eligibility(agreed);
     if (!account) $("signin").focus();
     if (account) {
@@ -95,14 +98,14 @@ export async function mountInvoicePage(connector, WORDS, AGREEMENT_WORDS, base =
   /** @param {string} raw */
   const decimal = (raw) => String(Number(raw) / 1e6);
   /** @param {string} iso */
-  const when = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const when = (iso) => new Date(iso).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
   // One row: what it is, its status as a chip with the page's words, and when.
-  /** @param {string} title @param {string} status @param {string} tone @param {string} at */
-  function row(title, status, tone, at) {
+  /** @param {string} title @param {string} status @param {string} tone @param {string} at @param {string} [dateLabel] */
+  function row(title, status, tone, at, dateLabel = "") {
     const item = document.createElement("li");
     const head = document.createElement("div"); head.textContent = title;
     const chip = document.createElement("span"); chip.textContent = status; chip.className = "chip " + tone; chip.style.alignSelf = "flex-start";
-    const time = document.createElement("span"); time.textContent = when(at); time.className = "when";
+    const time = document.createElement("span"); time.textContent = dateLabel + when(at); time.className = "when";
     item.append(head, chip, time);
     return item;
   }
@@ -294,6 +297,52 @@ export async function mountInvoicePage(connector, WORDS, AGREEMENT_WORDS, base =
       }
     }
   };
+  let workSubmission = crypto.randomUUID();
+  /** @param {string | null} account */
+  function resetWorkRequest(account) {
+    $("request-work").hidden = !account;
+    $("work-request-message").textContent = "";
+    $("work-request-submit").disabled = false;
+    $("work-request-submit").textContent = "Send work order request";
+    workSubmission = crypto.randomUUID();
+    $("work-request-note").value = ""; $("work-request-amount").value = ""; $("work-request-until").value = "";
+    if (!account) return;
+    try {
+      const draft = JSON.parse(localStorage.getItem("work-order-draft:" + base + ":" + account) || "null");
+      if (draft) {
+        workSubmission = draft.submission;
+        $("work-request-note").value = draft.note;
+        $("work-request-amount").value = draft.amount;
+        $("work-request-until").value = draft.date;
+        $("work-request-message").textContent = "A previous request is retained. Check your work orders before retrying; keep its original terms if the outcome is unknown.";
+      }
+    } catch { $("work-request-message").textContent = "The saved draft could not be read. Check your work orders before making another request."; }
+  }
+  $("work-request-form").onsubmit = async event => {
+    event.preventDefault();
+    if ($("work-request-submit").disabled) return;
+    const session = sessionVersion;
+    const key = "work-order-draft:" + base + ":" + $("account").textContent;
+    const date = $("work-request-until").value;
+    const draft = { submission: workSubmission, note: $("work-request-note").value, amount: $("work-request-amount").value, date,
+      until: date + "T23:59:59.999Z" };
+    $("work-request-submit").disabled = true;
+    $("work-request-submit").textContent = "Sending request…";
+    try {
+      localStorage.setItem(key, JSON.stringify(draft));
+      const { date: _date, ...request } = draft;
+      const result = await call("POST", "/api/work-orders", request);
+      if (session !== sessionVersion) return;
+      localStorage.removeItem(key);
+      resetWorkRequest($("account").textContent);
+      $("work-request-message").textContent = "Work order requested. The owner must review and authorize it before any payout. Reference: " + result.id;
+      await $("work-orders-check").onclick?.(new PointerEvent("click"));
+    } catch (e) {
+      if (session === sessionVersion) $("work-request-message").textContent = (e instanceof Error ? e.message : "Request outcome unavailable.") + " Your draft is retained. Check your work orders before changing its terms or starting another request.";
+    } finally {
+      if (session === sessionVersion) { $("work-request-submit").disabled = false; $("work-request-submit").textContent = "Send work order request"; }
+    }
+  };
   /** @type {import("./work-order-protocol.js").PublicWorkOrder | null} */
   let selectedOrder = null;
   let workOrderVersion = 0;
@@ -341,7 +390,7 @@ export async function mountInvoicePage(connector, WORDS, AGREEMENT_WORDS, base =
       const { orders } = /** @type {{orders: Pick<import("./work-order-protocol.js").PublicWorkOrder, "id" | "note" | "amount" | "until" | "createdAt">[]}} */ (await call("GET", "/api/work-orders"));
       if (session !== sessionVersion) return;
       syncRows($("work-orders-list"), orders, order => {
-        const item = row(order.note, usdc(order.amount), "", order.until);
+        const item = row(order.note, usdc(order.amount), "", order.until, "Deadline: ");
         const button = document.createElement("button"); button.textContent = "Review work order";
         button.onclick = () => { if (workOrderFiling) return; selectedOrder = null; $("work-order-detail").hidden = true; void refreshWorkOrder(order.id); };
         item.append(button); return item;

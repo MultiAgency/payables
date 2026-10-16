@@ -7,6 +7,8 @@ import { provisioningOptions } from "./provisioning.js";
  * server with its own owner, settings file and loopback port.
  */
 const Config = z.object({
+  /** Contributor entry at /; the existing authenticated consolidated owner workspace is /owners. */
+  portal: z.literal("invoices").optional(),
   /** Explicit opt-in, bounded self-service Payables provisioning. */
   selfService: provisioningOptions.optional(),
   /** The public host users sign in to, e.g. "dao.example.com". Bound into every sign-in signature. */
@@ -53,7 +55,7 @@ export function loadConfig(file = process.env.DASHBOARD_FILE ?? "dashboard.json"
  * this agent's executor. Gateway-only settings stay out.
  */
 export function childEnv(agent: AgentEntry & { envFile: string }, parent: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
-  const { SESSION_SECRET: _secret, DASHBOARD_FILE: _file, DASHBOARD_HOST: _host, DASHBOARD_AREA: _area, EXECUTOR: _executor, ...shared } = parent;
+  const { SESSION_SECRET: _secret, DASHBOARD_FILE: _file, DASHBOARD_HOST: _host, DASHBOARD_SIGNIN_HOSTS: _signingHosts, DASHBOARD_AREA: _area, EXECUTOR: _executor, ...shared } = parent;
   return { ...shared, ENV_FILE: agent.envFile, PORT: String(agent.port), ...(agent.area && { DASHBOARD_AREA: agent.area }), ...(agent.executor ? {} : { EXECUTOR: "off" }) };
 }
 

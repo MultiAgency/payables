@@ -188,6 +188,13 @@ by the owner's wallet or a DAO vote, kept `prepared → submitted → settled` s
 A payee's request to be paid, which becomes one payout operation with a stable key and immutable terms. Until it is
 submitted it is **prepared**: nothing is in flight, so it is not an unresolved operation.
 
+**Contributor portal**:
+The payee-facing intake for agreement requests, proposed work orders and payout requests, scoped to
+the signed-in recipient. A contributor work-order request saves immutable proposed terms; it creates
+no provider agent, grant or payment. The owner reviews and authorizes it in the existing work-order
+flow. The optional Invoices gateway also offers a consolidated owner workspace at `/owners`, with
+the existing per-agent owner permissions; contributor and owner sessions remain separate.
+
 ## Autopilot and records
 
 **Autopilot**:

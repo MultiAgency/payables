@@ -1,0 +1,26 @@
+{
+  "r1": {
+    "status": "superseded",
+    "replacement": "payables-standalone-signin-20261015-r2",
+    "artifactsRetained": true
+  },
+  "r2": {
+    "status": "frozen; undeployed",
+    "sourceSha256": "69a60aac1197c708873600be17f6107e68bd51ba9d8b771d93c9201f102d4d7d",
+    "imageArchiveSha256": "2faa8ee52fc73ef73650ff3b98dac4a7222c39826404cfa7bcc113a6c69f174c",
+    "maintenanceChecklist": "docs/standalone-signin-maintenance-checklist.md"
+  },
+  "productionActionsThisTask": [],
+  "maintenanceAccess": {
+    "method": "separate maintenance-only deployment on original service and volume",
+    "localPreservation": "passed",
+    "providerHandoff": "not exercised; release gate remains",
+    "runbook": "docs/stopped-volume-access.md",
+    "artifacts": "docs/stopped-volume-access-artifacts.json",
+    "lastAttempt": "docs/maintenance-attempt-20261015.md",
+    "status": "blocked before production changes: published immutable maintenance image reference missing",
+    "registryDestination": "ghcr.io/multiagency/payables-maintenance:20261015-r1",
+    "registryStatus": "selected; publishing authentication and authorization pending",
+    "registryRecord": "docs/maintenance-registry-status.json"
+  }
+}

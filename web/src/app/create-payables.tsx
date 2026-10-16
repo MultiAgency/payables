@@ -1,3 +1,4 @@
+import { payablesReservation, reservationUrl, type Gateway } from "./gateway-contract";
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Field, FieldGroup } from "../shared/form";
@@ -5,7 +6,8 @@ import { Button, ErrorBox, Spinner } from "../shared/ui";
 import { errorMessage, gw } from "../shared/lib";
 
 /** Reserves local setup only. Policy creation and grant issuance still require owner signatures. */
-export function CreatePayables({ account }: { account: string }) {
+export function CreatePayables({ gateway }: { gateway: Gateway }) {
+  const account = gateway.viewer!.account;
   const [kind, setKind] = useState<"wallet" | "dao">("wallet");
   const [dao, setDao] = useState("");
   const [busy, setBusy] = useState(false);
@@ -14,10 +16,9 @@ export function CreatePayables({ account }: { account: string }) {
     if (busy) return;
     setBusy(true); setError(undefined);
     try {
-      const result = await gw<{ url: string }>("/gw/payables", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, owner: kind === "wallet" ? account : dao.trim() }) });
-      if (!/^\/a\/pay-[0-9a-f]{24}\/$/.test(result.url)) throw new Error("The workspace address could not be verified. Continue again to recover your setup.");
-      location.assign(result.url);
+      const request = payablesReservation(gateway, kind, dao);
+      const result = await gw<unknown>(request.path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request.body) });
+      location.assign(reservationUrl(request.path, result));
     } catch (e) { setError(errorMessage(e)); setBusy(false); }
   };
   return <section aria-labelledby="create-payables-heading" className="flex max-w-2xl flex-col gap-5 border-b pb-8">

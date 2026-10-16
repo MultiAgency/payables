@@ -1,3 +1,4 @@
+import { canSetupPayables } from "../../app/gateway-contract";
 import { CreatePayables } from "../../app/create-payables";
 import { queriesFor } from "../../shared/queries";
 import { useFleet, type AgentState } from "./workspace-observations";
@@ -153,7 +154,7 @@ export function DaoHome({ gateway, activity = false }: { gateway: Gateway; activ
   return <main id="workspace-main" tabIndex={-1} className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 sm:px-8">
     <div><h1 className="text-2xl font-semibold">{activity ? "Activity" : "Home"}</h1>
       <p className="mt-2 text-sm text-muted-foreground">{activity ? "Retained history, grouped by agent. Each instance retains its own records; missing records are not proof of an outcome." : "Payments to review and treasury operations to follow."}</p></div>
-    {!activity && gateway.selfService && gateway.viewer && <CreatePayables account={gateway.viewer.account} />}
-    {activity ? <WorkspaceHistory agents={agents} /> : (!gateway.selfService || agents.length > 0) && <WorkspaceOverview agents={agents} daos={daos} />}
+    {!activity && canSetupPayables(gateway) && gateway.viewer && <CreatePayables gateway={gateway} />}
+    {activity ? <WorkspaceHistory agents={agents} /> : (!canSetupPayables(gateway) || agents.length > 0) && <WorkspaceOverview agents={agents} daos={daos} />}
   </main>;
 }
