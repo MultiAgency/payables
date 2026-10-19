@@ -57,6 +57,10 @@ export function reservationUrl(path: string, result: unknown): string {
   throw new Error("The workspace address could not be verified. Continue again to recover your setup.");
 }
 
+/** The contributor's report form on one agreement, under this agent's intake entry (root or `/i/own-…/`). */
+export const reportLink = (entry: string, agreementId: string) =>
+  new URL(`report?agreement=${encodeURIComponent(agreementId)}`, entry.endsWith("/") ? entry : `${entry}/`).toString();
+
 /** Shared intake belongs to the selected agent; a missing address never selects another owner. */
 export function payeeHostUrl(gateway: Gateway | null | undefined, base: string): string | undefined {
   if (!gateway) return undefined;

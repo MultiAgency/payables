@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { assertResponsive } = require('./fixtures/layout.cjs');
 /** Workspace history stays complete, isolated by agent and read-only across mixed roles. */
@@ -10,7 +11,7 @@ const { makeTick } = require('./fixtures/run.cjs');
 const root = path.resolve(process.argv[2] || 'web/dist');
 const at = '2026-10-15T12:00:00Z';
 
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   try {
     {
@@ -205,4 +206,4 @@ const at = '2026-10-15T12:00:00Z';
       console.log(`PASS ${width}px: complete filtered history, persistent recovery warnings, scoped links, retained run failures, mixed-role recovery, export retry and access revocation`);
     }
   } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});

@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 const { openWorkspaceNavigation } = require("./fixtures/navigation.cjs");
@@ -26,7 +27,7 @@ const overview = kind => ({ agentId: 'fixture', digest: 'fixture', notInForce: n
 });
 
 
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   const results = [];
   const filter = process.env.CASE_FILTER;
@@ -336,4 +337,4 @@ const overview = kind => ({ agentId: 'fixture', digest: 'fixture', notInForce: n
   console.log(JSON.stringify(results, null, 2));
   await browser.close();
   process.exitCode = results.length > 0 && results.every(result => result.pass) ? 0 : 1;
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});

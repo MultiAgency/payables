@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRightIcon, CheckIcon, FileTextIcon } from "@phosphor-icons/react";
 import { client, BASE, failureKind } from "../../shared/client";
+import { payeeHostUrl, reportLink } from "../../app/gateway-contract";
+import { gatewayQueries } from "../../app/queries";
+import { CopyButton } from "../../shared/ui";
 import { queries } from "../../shared/queries";
 import { useCanCall } from "../../app/viewer";
 import { useAgent } from "../../app/agent-context";
@@ -115,6 +118,8 @@ export function CompensationAgreements() {
 function AgreementForm() {
   const permitted = useCanCall("compensation/agreement");
   const query = useQuery(queries.compensation);
+  // Where this agent's contributors file: each agreement links to its own report form there.
+  const entry = payeeHostUrl(useQuery(gatewayQueries.session).data, BASE);
   const [editing, setEditing] = useState<string>(), [version, setVersion] = useState(0);
   const initial: CompensationTerms = { payee: "", title: "", document: "", signedOn: "", start: "", end: "", ceiling: "", openingApproved: "0", scope: "" };
   const [terms, setTerms] = useState(initial), [ceiling, setCeiling] = useState(""), [opening, setOpening] = useState("0");
@@ -123,7 +128,7 @@ function AgreementForm() {
   const stringField = (key: keyof CompensationTerms, label: string, type = "text") => <Labeled key={key} id={`terms-${key}`} label={label}><Input id={`terms-${key}`} type={type} required={key !== "scope"} disabled={busy || !!editing && ["payee", "start", "end"].includes(key)} value={terms[key]} onChange={e => setTerms({ ...terms, [key]: e.target.value })} /></Labeled>;
   return <section className="flex flex-col gap-5"><div><h2 className="text-2xl font-semibold tracking-tight">Period agreements</h2><p className="mt-2 text-sm text-muted-foreground">Record the signed document and the ceiling you agreed. Policy inclusion remains a separate owner action.</p></div>
     {query.error && <Alert variant="destructive"><AlertDescription>{query.error.message}<Button variant="outline" onClick={() => query.refetch()}>Refresh agreements</Button></AlertDescription></Alert>}
-    {query.data?.agreements.map(a => <div key={a.id} className="flex flex-wrap items-center justify-between gap-4 border-b py-5"><div><h3 className="font-semibold">{a.terms.title}</h3><p className="mt-1 break-all text-sm text-muted-foreground">{a.terms.payee} · {a.terms.start} – {a.terms.end}</p></div><div className="flex flex-wrap items-center gap-5"><span className="text-sm tabular-nums">{usdc(a.remaining)} of {usdc(a.terms.ceiling)} USDC remaining</span><Button variant="outline" disabled={!permitted || busy || !!query.error} onClick={() => { setEditing(a.id); setVersion(a.version); setTerms(a.terms); setCeiling(usdc(a.terms.ceiling).replaceAll(",", "")); setOpening(usdc(a.terms.openingApproved).replaceAll(",", "")); identity.current = newIdentity(); }}>Record amended terms</Button></div></div>)}
+    {query.data?.agreements.map(a => <div key={a.id} className="flex flex-wrap items-center justify-between gap-4 border-b py-5"><div><h3 className="font-semibold">{a.terms.title}</h3><p className="mt-1 break-all text-sm text-muted-foreground">{a.terms.payee} · {a.terms.start} – {a.terms.end}</p></div><div className="flex flex-wrap items-center gap-5"><span className="text-sm tabular-nums">{usdc(a.remaining)} of {usdc(a.terms.ceiling)} USDC remaining</span>{entry && <span className="flex items-center gap-2 text-sm"><a className="underline" href={reportLink(entry, a.id)} target="_blank" rel="noopener noreferrer">Open report form</a><CopyButton text={reportLink(entry, a.id)} /></span>}<Button variant="outline" disabled={!permitted || busy || !!query.error} onClick={() => { setEditing(a.id); setVersion(a.version); setTerms(a.terms); setCeiling(usdc(a.terms.ceiling).replaceAll(",", "")); setOpening(usdc(a.terms.openingApproved).replaceAll(",", "")); identity.current = newIdentity(); }}>Record amended terms</Button></div></div>)}
     {permitted && <details open={!!editing}><summary className="flex min-h-11 cursor-pointer items-center font-medium">{editing ? "Amend the recorded agreement" : "Record a signed agreement"}</summary><Card className="mt-3"><CardHeader><CardTitle>Manual agreement entry</CardTitle><CardDescription>The signed document stays in your filing system. You are recording its terms and signature date, not asking the service to verify it.</CardDescription></CardHeader><CardContent><form id="period-agreement" onSubmit={async e => {
       e.preventDefault(); setBusy(true); setError("");
       try {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readGateway, payablesReservation, reservationUrl, payeeHostUrl, canSetupPayables } from "../web/src/app/gateway-contract.js";
+import { readGateway, payablesReservation, reservationUrl, payeeHostUrl, canSetupPayables, reportLink } from "../web/src/app/gateway-contract.js";
 const location = { hostname: "payables.test", protocol: "https:", pathname: "/" };
 const shared = { agents: [], invoices: null, viewer: { account: "alice.near", access: {} }, selfService: true, setupAreas: ["payables"] };
 const response = (body: unknown) => new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
@@ -48,4 +48,11 @@ test("hosted malformed discovery fails closed; only intentional HTTP loopback HT
   await assert.rejects(readGateway(new Response("{bad", { headers: { "content-type": "application/json" } }), location), /invalid JSON/);
   await assert.rejects(readGateway(new Response(JSON.stringify({ error: "Useful refusal" }), { status: 403, headers: { "content-type": "application/json" } }), location), /Useful refusal/);
   for (const hostname of ["localhost", "127.0.0.1", "[::1]"]) assert.equal(await readGateway(new Response("<html>local</html>"), { ...location, hostname, protocol: "http:" }), null);
+});
+
+test("an agreement's report link opens its form under the root or a scoped intake entry", () => {
+  const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  assert.equal(reportLink("https://invoices.test/", id), `https://invoices.test/report?agreement=${id}`);
+  assert.equal(reportLink("https://invoices.test/i/own-0123456789abcdef01234567/", id), `https://invoices.test/i/own-0123456789abcdef01234567/report?agreement=${id}`);
+  assert.equal(reportLink("https://invoices.test/i/own-0123456789abcdef01234567", id), `https://invoices.test/i/own-0123456789abcdef01234567/report?agreement=${id}`);
 });

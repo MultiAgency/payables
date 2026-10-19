@@ -100,7 +100,7 @@ async function owner(browser, root) {
   await page.route('**/*', async route => {
     const url = new URL(route.request().url()), p = url.pathname;
     if (url.hostname !== 'frontend.test') return route.abort();
-    if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: null, viewer: { account: 'owner.near', access: { payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
+    if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: 'https://invoice.test/', viewer: { account: 'owner.near', access: { payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
     if (p.includes('/rpc/')) {
       const method = p.split('/rpc/')[1]; calls.push(method);
       if (method === 'compensation/prepare') {
@@ -200,6 +200,8 @@ async function owner(browser, root) {
   // The agreement shows the ceiling left after the owner's 200 USDC approval, not the reported 250.
   await page.getByRole('link', { name: 'Agreements', exact: true }).first().click();
   await page.getByText('800 of 1,000 USDC remaining', { exact: true }).waitFor();
+  // Each agreement shares a link that opens the contributor's report form on those terms.
+  assert.equal(await page.getByRole('link', { name: 'Open report form', exact: true }).getAttribute('href'), `https://invoice.test/report?agreement=${agreement.id}`);
   assert.equal(calls.filter(c => c === 'compensation/prepare').length, 0);
   assert.equal(calls.filter(c => c === 'compensation/send').length, 1);
   assert.deepEqual(errors, []);

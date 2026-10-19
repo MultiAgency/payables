@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 /** Offline presentation boundaries. All requests are intercepted; no executor or wallet starts. */
@@ -6,7 +7,7 @@ const path = require('node:path');
 const { chromium } = require('./fixtures/browser.cjs');
 const root = path.resolve(process.argv[2] || 'web/dist');
 
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   let failures = 0;
   async function check(name, options, verify) {
@@ -109,4 +110,4 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       });
   } finally { await browser.close(); }
   process.exitCode = failures ? 1 : 0;
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});

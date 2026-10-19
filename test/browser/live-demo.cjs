@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { planEvent, savedEvent, actionEvent } = require('./fixtures/plans.cjs');
 const { strategyStatus } = require('./fixtures/outputs.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
@@ -34,7 +35,7 @@ function overview(kind, state) {
   };
 }
 
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   try {
     async function open(routePath, options = {}) {
@@ -384,4 +385,4 @@ function overview(kind, state) {
     console.log('PASS changed observations invalidate open swap and payment confirmations');
 
   } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});

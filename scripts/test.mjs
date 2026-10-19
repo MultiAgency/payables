@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
@@ -25,6 +25,12 @@ const guard = fileURLToPath(new URL(live ? "../test/fixtures/live-network.cjs" :
 env.NODE_OPTIONS = `--require ${JSON.stringify(guard)}`;
 const files = live ? liveFiles : offlineFiles(readdirSync(new URL("../test/", import.meta.url)), requested);
 if (!files.length) throw new Error("No tests discovered");
-const result = spawnSync(process.execPath, ["--import", "tsx", "--test", ...files.map(name => `test/${name}`)], { cwd: root, env, stdio: "inherit" });
+// Failing tests name themselves in a file that outlives the console: an intermittent failure is never lost.
+mkdirSync(new URL("../.test-artifacts/offline/", import.meta.url), { recursive: true });
+const failures = fileURLToPath(new URL(`../.test-artifacts/offline/failures-${new Date().toISOString().replace(/[:.]/g, "-")}.log`, import.meta.url));
+const reporters = ["--test-reporter=spec", "--test-reporter-destination=stdout", `--test-reporter=${fileURLToPath(new URL("./failure-reporter.mjs", import.meta.url))}`, `--test-reporter-destination=${failures}`];
+const result = spawnSync(process.execPath, ["--import", "tsx", "--test", ...reporters, ...files.map(name => `test/${name}`)], { cwd: root, env, stdio: "inherit" });
 if (result.error) console.error(result.error.message);
+if (existsSync(failures) && statSync(failures).size === 0) rmSync(failures);
+else if (existsSync(failures)) console.error(`Failing tests recorded in ${failures}`);
 process.exitCode = result.status ?? 1;

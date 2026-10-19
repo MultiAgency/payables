@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { strategyStatus } = require('./fixtures/outputs.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
@@ -10,7 +11,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('./fixtures/browser.cjs');
 const root = require('node:path').resolve(process.argv[2] || 'web/dist');
 const results = [];
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({headless:true, executablePath:process.env.BROWSER_EXECUTABLE});
   try {
     for (const scenario of ['treasury-submitted','treasury-prepared','treasury-succeeded','treasury-read-error','treasury-ready','wallet-rejected','wallet-approved','overview-error','treasury-error']) {
@@ -90,4 +91,4 @@ const results = [];
     }
   } finally {await browser.close();}
   console.log(JSON.stringify(results,null,2)); process.exitCode=results.length > 0 && results.every(r=>r.pass)?0:1;
-})();
+});

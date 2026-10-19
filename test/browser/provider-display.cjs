@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { strategyStatus } = require('./fixtures/outputs.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
@@ -6,7 +7,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('./fixtures/browser.cjs');
 const USDC = 'nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1';
 const root = require('node:path').resolve(process.argv[2] || 'web/dist');
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   try {
     for (const scenario of ['fresh-then-stale', 'no-price', 'budget', 'budget-error', 'evidence', 'missing-evidence']) {
@@ -84,4 +85,4 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
       await page.close();
     }
   } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});

@@ -1,3 +1,4 @@
+const { runSuite } = require('./fixtures/task.cjs');
 const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** Authorization loss must clear only the affected private views, including during gateway refresh. */
 const assert = require('node:assert/strict');
@@ -6,7 +7,7 @@ const { chromium } = require('./fixtures/browser.cjs');
 const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 const root = path.resolve(process.argv[2] || 'web/dist');
 
-(async () => {
+runSuite(async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   try {
     async function open(routePath, options = {}) {
@@ -282,4 +283,4 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       await page.close(); console.log(`PASS ${encodedProcedure ? 'encoded RPC' : 'gateway procedure-only'} denial preserves authorized agent reads`);
     }
   } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+});
