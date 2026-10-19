@@ -40,8 +40,8 @@ test("operation descriptions whitelist search fields and separate retired tests 
   assert.ok(!matchesHistory(described, { ...EMPTY_HISTORY_FILTERS, search: "not-searchable" }));
   assert.equal(describeOperation({ ...operation, status: undefined }).status, "money:unknown");
   assert.equal(describeOperation({ ...operation, refused: "spend_budget_exceeded" }).status, "money:refused");
-  for (const kind of ["refusal", "verify-refusal", "probe"]) {
-    const probe = describeOperation({ ...operation, kind, refused: "spend_budget_exceeded" });
+  {
+    const probe = describeOperation({ ...operation, kind: "refusal", refused: "spend_budget_exceeded" });
     assert.equal(probe.type, "test");
     assert.equal(probe.status, "test:refused");
     assert.ok(!matchesHistory(probe, { ...EMPTY_HISTORY_FILTERS, status: "money:refused" }));

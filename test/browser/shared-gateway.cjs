@@ -1,3 +1,4 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
 
@@ -24,7 +25,7 @@ async function sharedSetup(browser, root) {
   await page.route('**/*', route => {
     const { hostname, pathname } = new URL(route.request().url());
     if (hostname !== 'frontend.test') return route.abort();
-    if (pathname === '/gw/me') return route.fulfill({ json: { agents: [], invoices: null, viewer: { account: 'alice.near', access: {} }, selfService: true, setupAreas: ['payables'] } });
+    if (pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: [], invoices: null, viewer: { account: 'alice.near', access: {} }, selfService: true, setupAreas: ['payables'] } });
     if (pathname === '/gw/agents') { reservations.push(route.request().postDataJSON()); return route.fulfill({ json: { name: 'own-alice' } }); }
     assert.ok(!pathname.includes('/rpc'), 'missing selected-agent access must prevent private reads');
     return route.fulfill({ path: pathname.startsWith('/static/') ? root + pathname : root + '/index.html' });

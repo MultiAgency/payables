@@ -1,0 +1,9 @@
+{
+  "story": "Riverside Commons orders 200 printed programmes from Sally Prints",
+  "ownerLabel": "Riverside Commons",
+  "payeeLabel": "Sally Prints",
+  "payee": "payee.near",
+  "amountUsdc": "12.50",
+  "note": "200 printed programmes for the November meetup",
+  "until": "2026-11-14T17:00:00.000Z"
+}

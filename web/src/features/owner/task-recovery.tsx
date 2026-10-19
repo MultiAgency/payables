@@ -12,12 +12,11 @@ import { OwnerActions } from "./owner-actions";
 import { Badge, Button, ErrorBox, Loading, QueryError, Section, StatusBadge } from "../../shared/ui";
 
 /** Provider-independent identity is an observation, never permission to send. */
-export const instanceQuery = queries.instance;
 
 export function StopSchedule() {
-  const instance = useQuery(instanceQuery);
+  const instance = useQuery(queries.instance);
   const canStop = useCanCall("autopilot/stop");
-  const stop = useAttempt([["autopilot"], ["strategy"]]);
+  const stop = useAttempt([queries.orpc.autopilot.key(), queries.orpc.strategy.key()]);
   return <Section title="Schedule">
     <p>{SCHEDULE_STOP_SCOPE}</p>
     {!canStop ? <p>Your account cannot stop the schedule.</p>

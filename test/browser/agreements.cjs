@@ -1,27 +1,28 @@
 /** Offline task journeys. Run through test/browser/run.cjs to retain failure diagnostics. */
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
+const { assertHidden } = require('./fixtures/hidden.cjs');
 const path = require('node:path');
 const { workspaceEvidence, workspaceOpener } = require('./fixtures/workspace.cjs');
 
 async function agreementTerms(browser, root) {
   const { budget, setup, overview } = workspaceEvidence({});
   const open = workspaceOpener(root, { budget, proposals: true, values(kind, options, state, run) {
-    const values = { get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' } }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved' }] : [],
-      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreements || (options.agreed ? [{ id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : []), activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
-      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
-      'autopilot/evidence': { ticks: [run] } };
+    const values = { get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' }, correlationId: 'fixture-held', approvalId: 'fixture-approval', kind: 'pay' }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved', kind: 'pay', request: {}, status: null, sent: true }] : [],
+      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreements || (options.agreed ? [{ note: '', id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : []), activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
+      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+      'autopilot/evidence': { ticks: [run], corrupt: [] } };
     if (options.destinations) {
       values.overview.policy.policy.destinations = { mode: options.destinationMode || 'only', list: options.destinations };
       values.overview.agreed = options.destinationMode === 'except' ? [] : options.destinations.filter(d => d.confidential).map(d => d.address);
     }
     if (options.unmanaged) {
-      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: '1000000', decimals: 6, usd: null }];
+      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: 1000000n, decimals: 6, usd: null, price: null, priceUpdatedAt: null, priceExpiresAt: null }];
       values.overview.policy.policy.assets = options.excluded ? ['usdc'] : 'any';
     }
     return values;
   } });
-  const agreement = (id, status) => ({ id, status, payee: `${id}.near`, amount: '1000000', origin: 'payee', at: '2026-10-01T00:00:00Z',
+  const agreement = (id, status) => ({ note: '', id, status, payee: `${id}.near`, amount: '1000000', origin: 'payee', at: '2026-10-01T00:00:00Z',
     ...(status !== 'requested' && { terms: { maxAmount: '1000000', until: '2030-01-01T00:00:00Z' } }) });
   const agreements = [agreement('established', 'agreed'), agreement('request', 'requested'), agreement('unfinished', 'proposed'), agreement('closed', 'declined'),
     { ...agreement('second-request', 'requested'), payee: 'request.near', amount: '2000000', note: 'Second milestone' }, agreement('filed', 'filed')];
@@ -45,13 +46,13 @@ async function agreementTerms(browser, root) {
     const recipients = await page.getByRole('article').evaluateAll(articles => articles.map(article => article.getAttribute('aria-label')));
     assert.deepEqual(recipients, ['Recipient request.near', 'Recipient unfinished.near', 'Recipient established.near', 'Recipient policy-only.near', 'Recipient public.near']);
     assert.ok(await page.getByRole('button', { name: 'Continue policy approval', exact: true }).isVisible());
-    assert.ok(!await policyOnly.getByRole('button', { name: 'Remove policy-only.near from policy', exact: true }).isVisible());
+    await assertHidden(policyOnly.getByRole('button', { name: 'Remove policy-only.near from policy', exact: true }));
     await policyOnly.getByText('Policy-only controls', { exact: true }).click();
     assert.ok(await policyOnly.getByRole('button', { name: 'Remove policy-only.near from policy', exact: true }).isVisible());
     await page.getByText('Filed or declined (2)', { exact: true }).click();
     assert.ok(await page.getByText('closed.near · 1 USDC · Declined', { exact: false }).isVisible());
     assert.ok(await page.getByText('filed.near · 1 USDC · Invoice filed', { exact: false }).isVisible());
-    assert.ok(!await page.locator('input[name="offer-payee"]').isVisible(), 'new offer form opens only on demand');
+    await assertHidden(page.locator('input[name="offer-payee"]'), 'new offer form opens only on demand');
     await page.getByText('Offer terms (a bounty, grant award or service agreement)', { exact: true }).click();
     await page.locator('input[name="offer-payee"]').fill('draft.near');
     // Background refresh must not close or erase an owner’s draft.
@@ -86,7 +87,7 @@ async function agreementTerms(browser, root) {
     await page.getByText(/1 money action has no proven outcome/).waitFor();
     await page.getByRole('link', { name: 'Review agreement requests' }).first().waitFor();
     assert.equal(await page.getByRole('link', { name: 'Continue agreement setup' }).first().getAttribute('href'), '/a/treasury/payees');
-    assert.ok(!await page.getByText('Completed fixture proposal', { exact: true }).isVisible());
+    await assertHidden(page.getByText('Completed fixture proposal', { exact: true }));
     const attention = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Needs attention', exact: true }) });
     const rows = await attention.locator('li').allTextContents();
     assert.ok(rows.findIndex(text => text.includes('no proven outcome')) < rows.findIndex(text => text.includes('agreement request')), 'unresolved operations precede agreement requests');
@@ -126,12 +127,12 @@ async function agreementPresentation(browser, root) {
     finally { await context.close(); }
   }
   const open = workspaceOpener(root, { budget, values(kind, options, state, run) {
-    const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' } }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved' }] : [],
-      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
-      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
-      'autopilot/evidence': { ticks: [run] } };
+    const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' }, correlationId: 'fixture-held', approvalId: 'fixture-approval', kind: 'pay' }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved', kind: 'pay', request: {}, status: null, sent: true }] : [],
+      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ note: '', id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
+      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+      'autopilot/evidence': { ticks: [run], corrupt: [] } };
     if (options.unmanaged) {
-      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: '1000000', decimals: 6, usd: null }];
+      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: 1000000n, decimals: 6, usd: null, price: null, priceUpdatedAt: null, priceExpiresAt: null }];
       values.overview.policy.policy.assets = options.excluded ? ['usdc'] : 'any';
     }
     return values;
@@ -141,8 +142,8 @@ async function agreementPresentation(browser, root) {
     const { page, calls } = await open(context, '/a/payables/payees');
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('heading', { name: 'Agreements', exact: true }).waitFor();
-    assert.ok(!await page.locator('input[name="offer-payee"]').isVisible(), 'new offers remain secondary even without waiting requests');
-    assert.ok(!await page.locator('input[name="payee"]').isVisible());
+    await assertHidden(page.locator('input[name="offer-payee"]'), 'new offers remain secondary even without waiting requests');
+    await assertHidden(page.locator('input[name="payee"]'));
     const offer = page.getByText('Offer terms (a bounty, grant award or service agreement)', { exact: true });
     await offer.focus(); await page.keyboard.press('Enter');
     assert.ok(await page.locator('input[name="offer-payee"]').isVisible());

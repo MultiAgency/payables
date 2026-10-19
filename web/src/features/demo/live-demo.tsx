@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { ASSETS } from "../../../../src/policy";
+import { ASSETS } from "@multiagency/sdk";
 import { useAgent } from "../../app/agent-context";
 import { useCanCall, useViewer } from "../../app/viewer";
 import { fromUnits, kindOf, queries, swaps } from "../../shared/lib";

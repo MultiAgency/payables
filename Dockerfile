@@ -6,6 +6,10 @@ FROM node:24-slim
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Images build only from a release candidate: the SDK is the vendored tarball, never a dev link.
+COPY scripts/release-mode.mjs ./scripts/release-mode.mjs
+COPY vendor ./vendor
+RUN node scripts/release-mode.mjs
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.json ./
 COPY src ./src

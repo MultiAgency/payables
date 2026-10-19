@@ -1,4 +1,6 @@
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { strategyStatus } = require('./fixtures/outputs.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
+const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 /** Offline failed-refresh checks. No server, signer or executor is started. */
 const assert = require('node:assert/strict');
 const { chromium } = require('./fixtures/browser.cjs');
@@ -14,23 +16,23 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
   await page.route('**/*', async route => {
    const { hostname, pathname: p } = new URL(route.request().url());
    if (hostname !== 'frontend.test') return route.abort();
-   if (p === '/gw/me') return route.fulfill({ json: { invoices: null, agents: [{ name: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: !options.member, canPropose: !options.member, canVote: !options.member, canExecute: !options.member, canManage: !options.member } } } } });
+   if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, invoices: null, agents: [{ name: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: !options.member, canPropose: !options.member, canVote: !options.member, canExecute: !options.member, canManage: !options.member } } } } });
    if (p.includes('/rpc/')) {
     const method = p.split('/rpc/')[1]; calls.push(method);
     if (method === state.denied) return route.fulfill({ status: options.denialStatus || 403, json: { error: 'Access denied' } });
     if (method === state.error || (options.cold && method === 'setup')) return route.fulfill({ status: 503, json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Fixture unavailable' } } });
     const values = {
      instance: { agentId: 'fixture', executor: !options.approveOnly },
-     setup: { agentId: 'fixture', executor: !options.approveOnly, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: null, dao: null },
-     overview: { agentId: 'fixture', area: options.payables ? 'payables' : 'treasury', book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [], agreed: [], notInForce: null, policy: { policy: { actions: ['swap'], destinations: { mode: 'only', list: [] } } } },
-     'treasury/get': null, 'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
-     activity: [{ at: options.payables ? new Date().toISOString() : '2026-10-01T00:00:00Z', kind: 'payout', request: { recipient: 'payee.near', amount: '1000000', asset: 'usdc' }, correlationId: 'payment-fixture', status: 'SUCCESS', policyRevision: 1, policyDigest: 'fixture-digest' }],
-     'owner/actions': options.ownerAction ? [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'submitted' }] : [], 'owner/pending': [], held: [], unresolved: options.unresolved ? [{ key: 'unresolved-fixture', kind: 'payout', at: '2026-10-01T00:00:00Z', status: 'PROCESSING', sent: true }] : [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
-     paymentHistory: { items: [], complete: true }, paymentStatus: { status: options.outcome || 'PROCESSING', request: { recipient: 'payee.near', asset: 'usdc', amount: '1000000' }, approvalId: null },
-     'strategy/get': null, 'autopilot/evidence': { ticks: [] },
+     setup: { agentId: 'fixture', executor: !options.approveOnly, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: null, dao: null },
+     overview: { agentId: 'fixture', area: options.payables ? 'payables' : 'treasury', book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [], agreed: [], notInForce: null, policy: { wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null } }, timelock: { delay_ms: 0, scheduled_count: 0 } }, policy: { frozen: false, confidential: true, owner_approval: true, assets: 'any', limits: {}, max_actions_per_hour: null, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0, actions: ['swap'], destinations: { mode: 'only', list: [] } } }, digest: null },
+     'treasury/get': null, 'autopilot/get': { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+     activity: [{ at: options.payables ? new Date().toISOString() : '2026-10-01T00:00:00Z', kind: 'payout', request: { recipient: 'payee.near', amount: '1000000', asset: 'usdc' }, correlationId: 'payment-fixture', status: 'SUCCESS', policyRevision: 1, policyDigest: 'fixture-digest', approvalId: 'approval-fixture' }],
+     'owner/actions': options.ownerAction ? [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'submitted', expiresAt: '2030-01-01T00:00:00Z', failureCode: null, signer: 'wallet', ownerSucceeded: false, status: null, payment: null }] : [], 'owner/pending': [], held: [], unresolved: options.unresolved ? [{ key: 'unresolved-fixture', kind: 'payout', at: '2026-10-01T00:00:00Z', status: 'PROCESSING', sent: true, request: {} }] : [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [], reconcileBooks: [],
+     paymentHistory: { items: [], complete: true }, paymentStatus: { status: options.outcome || 'PROCESSING', request: { recipient: 'payee.near', asset: 'usdc', amount: '1000000' }, approvalId: null, failureCode: null, createdAt: null, updatedAt: null, expiresAt: null, detailError: null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null } },
+     'strategy/get': strategyStatus(), 'autopilot/evidence': { ticks: [], corrupt: [] },
     };
     assert.ok(method in values, `Unexpected RPC ${method}`);
-    return route.fulfill({ json: { json: rpcValue(values, method) } });
+    return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
    }
    if (p.startsWith('/static/')) return route.fulfill({ path: root + p, contentType: p.endsWith('.js') ? 'application/javascript' : p.endsWith('.css') ? 'text/css' : 'font/woff2' });
    return route.fulfill({ path: root + '/index.html', contentType: 'text/html' });

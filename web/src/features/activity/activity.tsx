@@ -117,13 +117,8 @@ export function Unresolved() {
   );
 }
 
-/**
- * A probe sent on purpose to show the policy refusing it; older logs call it `verify-refusal` or
- * `probe`. The live probes are retired, so these rows are history: kept,
- * and listed apart from what the agent did.
- */
-const PROBE_KINDS = new Set(["refusal", "verify-refusal", "probe"]);
-export const isProbe = (op: { kind: string }) => PROBE_KINDS.has(op.kind);
+/** A probe sent on purpose to show the policy refusing it, listed apart from what the agent did. */
+export const isProbe = (op: { kind: string }) => op.kind === "refusal";
 
 type ActivityRow = Awaited<ReturnType<typeof client.activity>>[number];
 

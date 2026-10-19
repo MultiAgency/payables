@@ -1,3 +1,5 @@
+const { strategyStatus } = require('./fixtures/outputs.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** Offline loading/empty transitions. Every request is intercepted; no write RPC is declared.
  * CASE_FILTER='run loading 390 light' node test/browser/loading-states.cjs [build-directory]
  */
@@ -5,7 +7,7 @@ const assert = require('node:assert/strict');
 const { mkdirSync } = require('node:fs');
 const { resolve, join } = require('node:path');
 const { runTask } = require('./fixtures/task.cjs');
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 const { workspaceEvidence } = require('./fixtures/workspace.cjs');
 const { makeTick, recordingFor } = require('./fixtures/run.cjs');
 
@@ -40,20 +42,20 @@ async function open(browser, root, routePath, options = {}) {
   const currentOverview = overview(agent);
   if (options.frozen) currentOverview.policy.policy.frozen = true;
   const held = options.held ? [{ correlationId: 'held-loading-fixture', approvalId: 'approval-loading-fixture',
-    at: '2026-10-14T12:00:00Z', request: { recipient: 'payee.near', asset: 'usdc', amount: '1000000', confidential: true } }] : [];
+    at: '2026-10-14T12:00:00Z', request: { recipient: 'payee.near', asset: 'usdc', amount: '1000000', confidential: true }, kind: 'pay' }] : [];
   const values = {
     instance: { agentId: 'fixture', executor: !options.approveOnly },
     setup: { ...setup, executor: !options.approveOnly,
       grant: options.noGrant ? null : { ...setup.grant, label: agent === 'payables' ? 'payout' : 'treasury' } },
     overview: currentOverview,
     'treasury/get': null, held,
-    unresolved: options.unresolved ? [{ key: 'unresolved-loading-fixture', at: '2026-10-14T12:00:00Z' }] : [],
+    unresolved: options.unresolved ? [{ kind: 'pay', request: {}, status: null, sent: true, key: 'unresolved-loading-fixture', at: '2026-10-14T12:00:00Z' }] : [],
     'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
     activity: [], invoices: [], policyHistory: [], reconcileBooks: [],
     paymentHistory: { items: [], complete: true },
-    'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 },
+    'autopilot/get': { on: false, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
     'autopilot/evidence': { ticks, corrupt: options.corrupt || [] },
-    'strategy/get': null,
+    'strategy/get': strategyStatus(),
   };
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/*', async route => {
@@ -61,7 +63,7 @@ async function open(browser, root, routePath, options = {}) {
     // The existing wallet selector discovers public wallet metadata. Keep that read offline too.
     if (route.request().method() === 'GET' && route.request().url() === walletManifest) return route.abort();
     if (hostname !== 'frontend.test') { blocked.push(route.request().url()); return route.abort(); }
-    if (pathname === '/gw/me') return route.fulfill({ json: {
+    if (pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES,
       agents: [{ name: agent, area: agent, owner: 'owner.near', dao: false }], invoices: null,
       viewer: { account: 'owner.near', access: { [agent]: {
         canSign: !options.readOnly, canPropose: !options.readOnly, canVote: !options.readOnly,
@@ -81,9 +83,9 @@ async function open(browser, root, routePath, options = {}) {
         const id = route.request().postDataJSON().json.tickId;
         const tick = ticks.find(tick => tick.id === id);
         assert.ok(tick, 'recording reads must select a retained run');
-        return route.fulfill({ json: { json: recordingFor(tick) } });
+        return route.fulfill({ json: rpcAnswer(method, recordingFor(tick)) });
       }
-      return route.fulfill({ json: { json: rpcValue(values, method) } });
+      return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
     }
     if (pathname.startsWith('/static/')) return route.fulfill({ path: join(root, pathname),
       contentType: pathname.endsWith('.js') ? 'application/javascript' : pathname.endsWith('.css') ? 'text/css' : 'font/woff2' });
@@ -207,7 +209,7 @@ scenario('payments failed read is not empty', async (browser, root) => {
   await loading(page, 'Checking payments and owner actions…');
   gates.get('held').release();
   // The same failed source is surfaced by both area attention and the payment queue.
-  await page.getByText('Fixture read unavailable: held', { exact: true }).first().waitFor();
+  await page.getByText(UNAVAILABLE, { exact: true }).first().waitFor();
   await page.getByText('The available records show no matching items. Some checks are incomplete; review the notices above.', { exact: true }).waitFor();
   assert.equal(await page.getByText(noPayments, { exact: true }).count(), 0);
   assert.equal(await page.getByText('No records need review.', { exact: true }).count(), 0);
@@ -233,7 +235,7 @@ scenario('run failed read retries without an empty claim', async (browser, root)
   const { page, gates, state } = test;
   await loading(page, 'Loading recorded runs…');
   gates.get('autopilot/evidence').release();
-  await page.getByText('Fixture read unavailable: autopilot/evidence', { exact: true }).waitFor();
+  await page.getByText(UNAVAILABLE, { exact: true }).first().waitFor();
   await page.getByRole('heading', { name: 'Follow this run', exact: true }).waitFor();
   assert.equal(await page.getByText(noRuns, { exact: true }).count(), 0);
   const retry = page.getByRole('button', { name: 'Check again', exact: true });
@@ -260,7 +262,7 @@ for (const profile of ['read-only', 'approve-only']) scenario(`run empty ${profi
 
 scenario('missing selected run offers latest retained run', async (browser, root) => {
   const tick = makeTick('quiet', budget);
-  const test = await open(browser, root, '/a/treasury/follow/run?run=missing-run', { agent: 'treasury', readOnly: true, ticks: [tick] });
+  const test = await open(browser, root, '/a/treasury/follow/run?run=missing-run', { agent: 'treasury', readOnly: true, ticks: [tick], corrupt: [] });
   const { page } = test;
   await page.getByText('The selected run was not found in this executor’s retained records.', { exact: true }).waitFor();
   await page.getByRole('link', { name: 'View latest run', exact: true }).click();

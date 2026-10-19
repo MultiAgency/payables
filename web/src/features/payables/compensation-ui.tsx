@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { CompensationReport, CompensationRequest } from "../../../../src/compensation-contract";
+import type { CompensationReport, CompensationRequest } from "@multiagency/sdk";
 import { Field, FieldLabel, FieldDescription, FieldGroup } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -63,3 +63,6 @@ export function ReportBody({ request }: { request: CompensationRequest }) {
     {request.feedback && <div className="border-t pt-5"><h3 className="mb-2 font-semibold">Owner feedback</h3><p className="whitespace-pre-wrap break-words text-sm leading-6">{request.feedback}</p></div>}
   </div>;
 }
+
+/** The amount to show for a request: the owner's approved amount, else the amount the report asked for. Display only. */
+export const shownAmount = (request: { approvedAmount?: string; report: { amount?: string } }) => request.approvedAmount ?? request.report.amount;

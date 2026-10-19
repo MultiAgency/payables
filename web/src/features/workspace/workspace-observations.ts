@@ -8,7 +8,7 @@ import { deniedAt, useAccessState } from "../../shared/access";
 /** Independent reads retain useful results when another check fails or is slow. */
 export function useFleet(agents: GatewayAgent[]) {
   const access = useAccessState();
-  const definitions = agents.map(({ name }) => queriesFor(clientFor(`/a/${name}`), ["fleet", name]));
+  const definitions = agents.map(({ name }) => queriesFor(clientFor(`/a/${name}`), `/a/${name}`));
   const setup = useQueries({ queries: definitions.map(q => ({ ...q.setup, refetchInterval: 30_000, retry: false })) });
   const overview = useQueries({ queries: definitions.map(q => ({ ...q.overview, refetchInterval: 30_000, retry: false })) });
   const needsAgreements = agents.map((agent, i) => agent.area ? agent.area === "payables" : overview[i]?.data ? kindOf(overview[i]!.data!) === "facilitator" : true);

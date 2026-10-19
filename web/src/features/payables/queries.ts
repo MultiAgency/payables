@@ -1,12 +1,14 @@
-import { queryOptions } from "@tanstack/react-query";
-import type { QuerySource } from "../../shared/query-source";
+import type { QueryUtils } from "../../shared/queries";
 
-export function payablesQueriesFor(api: QuerySource, key: (local: string[], fleet?: string) => readonly string[]) {
+export function payablesQueriesFor(orpc: QueryUtils) {
   return {
-    invoices: queryOptions({ queryKey: key(["invoices"]), queryFn: () => api.invoices(), refetchInterval: 15_000 }),
-    paymentStatus: (correlationId: string | undefined) => queryOptions({ queryKey: key(["paymentStatus", correlationId ?? ""]), queryFn: ({ signal }) => api.paymentStatus({ correlationId: correlationId! }, { signal }), enabled: Boolean(correlationId), retry: false }),
-    held: queryOptions({ queryKey: key(["held"]), queryFn: () => api.held(), refetchInterval: 15_000 }),
-    agreements: queryOptions({ queryKey: key(["agreements"]), queryFn: () => api.agreements.list(), refetchInterval: 30_000 }),
-    paymentHistory: queryOptions({ queryKey: key(["paymentHistory"]), queryFn: ({ signal }) => api.paymentHistory(undefined, { signal }), refetchInterval: 30_000, retry: false }),
+    invoices: orpc.invoices.queryOptions({ refetchInterval: 15_000 }),
+    paymentStatus: (correlationId: string | undefined) => orpc.paymentStatus.queryOptions({ input: { correlationId: correlationId ?? "" }, enabled: Boolean(correlationId), retry: false }),
+    held: orpc.held.queryOptions({ refetchInterval: 15_000 }),
+    agreements: orpc.agreements.list.queryOptions({ refetchInterval: 30_000 }),
+    paymentHistory: orpc.paymentHistory.queryOptions({ refetchInterval: 30_000, retry: false }),
+    compensation: orpc.compensation.list.queryOptions({ retry: false }),
+    workOrders: orpc.workOrders.list.queryOptions({ retry: false }),
+    workOrder: (id: string) => orpc.workOrders.get.queryOptions({ input: { id }, refetchInterval: 10_000, retry: false }),
   };
 }

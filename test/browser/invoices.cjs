@@ -1,6 +1,7 @@
 /** Offline task journeys. Run through test/browser/run.cjs to retain failure diagnostics. */
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
+const { assertHidden } = require('./fixtures/hidden.cjs');
 const { execFileSync } = require('node:child_process');
 const { html, script } = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e',
   'import { invoicePage, invoiceBrowser } from "./src/invoice-page.ts"; console.log(JSON.stringify({html:invoicePage("Invoice fixture"),script:invoiceBrowser}));'], { encoding: 'utf8' }));
@@ -188,7 +189,7 @@ async function invoiceDraftsAndRefresh(browser, root) {
   await page.locator('#signout').click();
   await page.locator('#signin').waitFor();
   assert.equal(await page.evaluate(() => document.activeElement.id), 'signin', 'sign-out restores a visible keyboard target');
-  assert.equal(await page.locator('#agreements-card').isVisible(), false);
+  await assertHidden(page.locator('#agreements-card'));
   assert.equal(await page.locator('#agreements li').count(), 0);
   assert.equal(await page.locator('#invoices li').count(), 0);
   await oldSessionRead.fulfill({ json: response('unknown') });
@@ -206,7 +207,7 @@ async function invoiceDraftsAndRefresh(browser, root) {
   assert.equal(await page.locator('#amount').inputValue(), '9');
   assert.equal(await page.locator('#note').inputValue(), 'Bob draft');
   assert.equal(await page.locator('#refresh-status').innerText(), '');
-  assert.equal(await page.locator('#error').isVisible(), false);
+  await assertHidden(page.locator('#error'));
   while (!queued.length) await new Promise(resolve => setImmediate(resolve));
   await queued.shift().fulfill({ json: { invoices: [], agreements: [], agreed: true } });
   await page.getByText(/Last checked/).waitFor();
@@ -245,7 +246,7 @@ async function invoiceSessionExpiry(browser, root) {
     await page.getByRole('button', { name: method === 'GET' ? 'Check invoice status again' : 'Submit invoice', exact: true }).click();
     await page.getByRole('button', { name: 'Sign in with NEAR' }).waitFor();
     assert.equal(await page.getByText(/Private invoice/).count(), 0);
-    assert.equal(await page.locator('#amount').isVisible(), false);
+    await assertHidden(page.locator('#amount'));
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('invoice-draft:payee.near')).submission), 'original-id');
     await page.getByRole('button', { name: 'Sign in with NEAR' }).click();
     await page.getByRole('button', { name: 'Submit invoice', exact: true }).waitFor();

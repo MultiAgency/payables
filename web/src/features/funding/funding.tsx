@@ -8,17 +8,20 @@ import { kindOf } from "../../shared/lib";
 import { TreasuryPayees } from "../payables/payees";
 import { ReturnFunds, TreasurySection } from "./treasury";
 import { Details, Section } from "../../shared/ui";
+import { OWNER_TREASURY, useProvides } from "../../app/capabilities";
 
 export function Funding() {
   const { data } = useAgent();
   const hash = useLocation({ select: location => location.hash });
+  const ownerTreasury = useProvides(OWNER_TREASURY);
   return <>
     <TaskEvidence task="funding" />
     <Balances />
-    <TreasurySection />
+    {ownerTreasury && <TreasurySection />}
     <section id="sweep" className="scroll-mt-24 flex flex-col gap-4" aria-label="Shield public funds">
+      {/* A running schedule's stop control stays on every host (autopilot/get is an observation); it renders only while one is on. */}
       {kindOf(data) === "facilitator" && <PayablesSchedule />}
-      <Details summary="Shield public funds" open={hash === "sweep"}><Sweep /></Details>
+      {ownerTreasury && <Details summary="Shield public funds" open={hash === "sweep"}><Sweep /></Details>}
     </section>
     <Section title="Send funds" description="Outgoing payments use this agent’s policy and grant. Reported balances do not establish how much can be sent.">
       <ReturnFunds />

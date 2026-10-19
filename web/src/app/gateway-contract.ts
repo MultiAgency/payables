@@ -1,17 +1,21 @@
 import { z } from "zod";
+import { PORTFOLIO } from "./capability-sets.js";
 
 const name = z.string().regex(/^[a-z0-9-]{1,32}$/);
-const supplier = z.url().refine(value => ["https:", "http:"].includes(new URL(value).protocol));
+const payeeHost = z.url().refine(value => ["https:", "http:"].includes(new URL(value).protocol));
 const access = z.object({ canSign: z.boolean(), canPropose: z.boolean(), canVote: z.boolean(), canExecute: z.boolean(), canManage: z.boolean() });
 const schema = z.object({
-  agents: z.array(z.object({ name, owner: z.string().min(1), dao: z.boolean(), area: z.enum(["payables", "treasury"]).optional(), managed: z.boolean().optional(), invoices: supplier.nullable().optional() })),
-  invoices: supplier.nullable(),
+  agents: z.array(z.object({ name, owner: z.string().min(1), dao: z.boolean(), area: z.enum(["payables", "treasury"]).optional(), managed: z.boolean().optional(), invoices: payeeHost.nullable().optional() })),
+  invoices: payeeHost.nullable(),
   viewer: z.object({ account: z.string().min(1), access: z.record(z.string(), access) }).nullable(),
   selfService: z.boolean().optional(),
   setupAreas: z.array(z.enum(["payables", "treasury"])).optional(),
+  capabilities: z.array(z.string()).optional(),
 });
 export type Gateway = z.infer<typeof schema>;
 export type GatewayAgent = Gateway["agents"][number];
+/** A Portfolio (Treasury) agent: by its area, or for a legacy static agent without one, by its name. */
+export const isPortfolioAgent = (agent: Pick<GatewayAgent, "area" | "name">) => agent.area ? agent.area === "treasury" : agent.name === "treasury";
 export const canSetupPayables = (gateway: Gateway) => gateway.selfService === true && (gateway.setupAreas === undefined || gateway.setupAreas.includes("payables"));
 
 export async function readGateway(response: Response, location: Pick<Location, "hostname" | "protocol" | "pathname">): Promise<Gateway | null> {
@@ -28,7 +32,9 @@ export async function readGateway(response: Response, location: Pick<Location, "
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new Error("The gateway returned invalid discovery data.");
-  return parsed.data;
+  // A host without the Portfolio capabilities does not present Portfolio agents (P2 manifest, optional).
+  const portfolio = PORTFOLIO.every(name => parsed.data.capabilities?.includes(name));
+  return portfolio ? parsed.data : { ...parsed.data, agents: parsed.data.agents.filter(agent => !isPortfolioAgent(agent)) };
 }
 
 export function payablesReservation(gateway: Gateway, kind: "wallet" | "dao", dao: string): { path: `/gw/${string}`; body: Record<string, string> } {
@@ -52,7 +58,7 @@ export function reservationUrl(path: string, result: unknown): string {
 }
 
 /** Shared intake belongs to the selected agent; a missing address never selects another owner. */
-export function supplierUrl(gateway: Gateway | null | undefined, base: string): string | undefined {
+export function payeeHostUrl(gateway: Gateway | null | undefined, base: string): string | undefined {
   if (!gateway) return undefined;
   const current = gateway.agents.find(agent => `/a/${agent.name}` === base);
   if (gateway.setupAreas !== undefined || current?.managed || current?.invoices !== undefined) return current?.invoices ?? undefined;

@@ -1,4 +1,5 @@
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
+const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 /** Offline regressions: all requests are fulfilled locally or aborted; no executor runs.
  * PLAYWRIGHT_MODULE=/path/to/playwright-core BROWSER_EXECUTABLE=/path/to/chrome
  * node test/browser/friction.cjs /path/to/frontend-build
@@ -25,23 +26,23 @@ const results = [];
           },
         } });
       }, draft === 'copy-failure');
-      let settings = { on: true, everyMin: 60, maxUsd: 10 };
+      let settings = { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null };
       const writes = [];
       await page.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.hostname !== 'frontend.test') return route.abort();
         const p = url.pathname;
-        if (p === '/gw/me') return route.fulfill({ json: { agents: draft === 'topup' ? [{ name: 'treasury', owner: 'owner.near', dao: false }, { name: 'payables', owner: 'owner.near', dao: false }] : [], invoices: null, viewer: { account: 'owner.near', access: { treasury: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true }, payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
+        if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: draft === 'topup' ? [{ name: 'treasury', owner: 'owner.near', dao: false }, { name: 'payables', owner: 'owner.near', dao: false }] : [], invoices: null, viewer: { account: 'owner.near', access: { treasury: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true }, payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
         if (p.includes('/rpc/')) {
           const method = p.split('/rpc/')[1];
           if (method === 'autopilot/stop') {
             writes.push({ method }); settings.on = false;
-            return route.fulfill({ json: { json: { on: false } } });
+            return route.fulfill({ json: rpcAnswer(method, { on: false }) });
           }
           const values = {
-            get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { executor: true, agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z' }, dao: null },
-            overview: { agentId: 'fixture', digest: 'sha256:' + 'a'.repeat(64), notInForce: null, agreed: [], unmanaged: [], target: { usdc: 1 }, rebalance: { minLegUsd: 1, maxCostBps: 100 }, book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: '0', confidential: '10000000', usd: 10, price: 1 }], policy: { status: 'APPLIED', revision: 1, policy: { actions: ['swap'], owner_approval: false, frozen: false, destinations: { mode: 'only', list: [{ action: 'transfer', address: 'payee.near', confidential: true }] }, assets: 'any', budget: {}, limits: {} }, usage: { budget: {} }, cooldowns: {} } },
-            'treasury/get': null, held: [], unresolved: copying ? [{ key: 'fixture-operation', at: new Date().toISOString(), kind: 'swap', sent: true, status: 'PROCESSING' }] : [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true }, 'autopilot/get': settings, 'autopilot/evidence': { ticks: [] }, 'strategy/get': { strategy: { targetBps: { usdc: 10000 }, minLegUsd: 1, maxCostBps: 100, autopilot: { everyMin: 60, maxUsd: 10 } }, digest: 'fixture', executor: true, grantMatches: true, readiness: { canEnable: true, reasons: [] } }, invoices: [],
+            get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { executor: true, agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z', id: 'grant-fixture' }, dao: null },
+            overview: { agentId: 'fixture', digest: 'sha256:' + 'a'.repeat(64), notInForce: null, agreed: [], unmanaged: [], target: { usdc: 1 }, rebalance: { minLegUsd: 1, maxCostBps: 100 }, book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: 0n, confidential: 10000000n, usd: 10, price: 1, priceUpdatedAt: null, priceExpiresAt: null }], policy: { status: 'APPLIED', revision: 1, policy: { actions: ['swap'], owner_approval: false, frozen: false, destinations: { mode: 'only', list: [{ action: 'transfer', address: 'payee.near', confidential: true }] }, assets: 'any', budget: { daily_usd: null, weekly_usd: null, monthly_usd: null}, limits: {}, confidential: true, max_actions_per_hour: null, timelock_ms: 0 }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', provider_policy_synced: true }, grants: [] },
+            'treasury/get': null, held: [], unresolved: copying ? [{ key: 'fixture-operation', at: new Date().toISOString(), kind: 'swap', sent: true, status: 'PROCESSING', request: {} }] : [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], activity: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true }, 'autopilot/get': settings, 'autopilot/evidence': { ticks: [], corrupt: [] }, 'strategy/get': { grantSuffix: 'fixture', on: false, unresolved: 0, grant: null, observedAt: '2026-10-16T00:00:00.000Z', strategy: { targetBps: { usdc: 10000 }, minLegUsd: 1, maxCostBps: 100, autopilot: { everyMin: 60, maxUsd: 10 } }, digest: 'fixture', executor: true, grantMatches: true, readiness: { state: 'off', canEnable: true, reasons: [] } }, invoices: [],
             ...(refusal || draft === 'topup' ? { pay: { outcome: 'refused', code: draft === 'topup' ? 'grant_missing' : draft } } : {}),
           };
           if (draft === 'topup' && method === 'overview') {
@@ -49,7 +50,7 @@ const results = [];
             values.overview.policy.policy.destinations.list.push({ action: 'transfer', address: 'agent.near', confidential: true });
           }
           if (!(method in values)) return route.fulfill({ status: 400, json: { error: 'Unexpected fixture request' } });
-          return route.fulfill({ json: { json: rpcValue(values, method) } });
+          return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
         }
         if (p.startsWith('/static/')) return route.fulfill({ path: root + p, contentType: p.endsWith('.js') ? 'application/javascript' : p.endsWith('.css') ? 'text/css' : 'font/woff2' });
         return route.fulfill({ path: path.join(root, 'index.html'), contentType: 'text/html' });

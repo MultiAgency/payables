@@ -5,13 +5,14 @@ import { StrictMode, Suspense, lazy, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { PublicHome } from "./public";
 import { ErrorBox, Button, Loading } from "./shared/ui";
-import { ownersOf } from "./app/session";
+import { loadGateway, ownersOf } from "./app/session";
+import { scopeOfKey, scopeQueries } from "./shared/queries";
+import { confirmSession, sessionUnconfirmed, subscribeSession, watchSession } from "./shared/session-check";
 import { BASE } from "./shared/client";
 import { deniedAt, onAccessDenial, recheckAccess, useAccessState } from "./shared/access";
 import "./styles.css";
 
 const AuthenticatedApp = lazy(() => import("./app/authenticated-app").then(module => ({ default: module.AuthenticatedApp })));
-const PrototypeExplorer = lazy(() => import("./public/prototype-explorer").then(module => ({ default: module.PrototypeExplorer })));
 
 // Follow the system theme.
 const dark = matchMedia("(prefers-color-scheme: dark)");
@@ -24,19 +25,34 @@ onAccessDenial(denial => {
   if (denial.scope === "procedure") clearAgentCapabilities(queryClient, denial.base);
   else {
     redactProposalCaches(queryClient);
-    const name = denial.base.slice("/a/".length);
     const affected = (query: { queryKey: readonly unknown[] }) => {
-      const [scope, agent] = query.queryKey;
-      if (scope === "gateway" || scope === "gw") return false;
-      if (denial.scope === "session") return true;
-      if (scope === "fleet" || scope === "sibling") return agent === name;
-      return Boolean(BASE) && BASE === denial.base;
+      const scope = scopeOfKey(query.queryKey);
+      if (!scope) return false;
+      return denial.scope === "session" || scope.base === denial.base;
     };
     // Discard late reads as well as cached observations; unrelated agents keep their records.
     void queryClient.cancelQueries({ predicate: affected }).then(() => queryClient.removeQueries({ predicate: affected }));
   }
   void queryClient.invalidateQueries({ queryKey: gatewayQueries.session.queryKey, exact: true });
 });
+
+// Agent reads are keyed by the signed-in account. When another account signs in on this host (for
+// example in another tab), every earlier account's agent records and proposal lists leave memory.
+queryClient.getQueryCache().subscribe(event => {
+  if (event.type !== "updated" || event.action.type !== "success" || event.query.queryHash !== JSON.stringify(gatewayQueries.session.queryKey)) return;
+  const account = (event.query.state.data as Awaited<ReturnType<typeof loadGateway>> | undefined)?.viewer?.account ?? null;
+  // Rescope before confirming, so the first render with restored controls reads the new account's records.
+  const rescoped = scopeQueries(account);
+  confirmSession();
+  if (!rescoped) return;
+  const earlier = (query: { queryKey: readonly unknown[] }) => {
+    const scope = scopeOfKey(query.queryKey);
+    return scope ? scope.account !== (account ?? "") : query.queryKey[0] === "gw";
+  };
+  void queryClient.cancelQueries({ predicate: earlier }).then(() => queryClient.removeQueries({ predicate: earlier }));
+});
+watchSession(() => void queryClient.invalidateQueries({ queryKey: gatewayQueries.session.queryKey, exact: true }));
+const NO_ACCESS = { canSign: false, canPropose: false, canVote: false, canExecute: false, canManage: false };
 
 /**
  * Served by a local agent server, this is that agent's dashboard. Behind the hosted gateway, a
@@ -46,6 +62,7 @@ onAccessDenial(denial => {
 function GatewayPage({ activity }: { activity: boolean }) {
   const access = useAccessState();
   const query = useQuery(gatewayQueries.session);
+  const unconfirmed = useSyncExternalStore(subscribeSession, sessionUnconfirmed);
   if (query.isPending) return <main className="mx-auto max-w-xl p-8"><Loading label="Loading dashboard…" /></main>;
   if (query.isError && query.data === undefined) return <main className="mx-auto flex max-w-xl flex-col items-start gap-4 p-8">
     <h1 className="text-xl font-semibold">Dashboard unavailable</h1>
@@ -64,8 +81,9 @@ function GatewayPage({ activity }: { activity: boolean }) {
   const hiddenAgents = gateway?.viewer && gateway.agents.some(agent => deniedAt(access, `/a/${agent.name}`));
   const visibleGateway = gateway?.viewer ? { ...gateway,
     agents: gateway.agents.filter(agent => !deniedAt(access, `/a/${agent.name}`)),
+    // Until the gateway confirms who is signed in, the previous account's permissions enable nothing.
     viewer: { ...gateway.viewer, access: Object.fromEntries(Object.entries(gateway.viewer.access)
-      .filter(([name]) => !deniedAt(access, `/a/${name}`))) },
+      .filter(([name]) => !deniedAt(access, `/a/${name}`)).map(([name, rights]) => [name, unconfirmed ? NO_ACCESS : rights])) },
   } : gateway;
   const content = gateway && !gateway.viewer ? (
     <PublicHome daos={ownersOf(gateway.agents)} invoices={gateway.invoices} selfService={canSetupPayables(gateway)} />
@@ -77,6 +95,7 @@ function GatewayPage({ activity }: { activity: boolean }) {
       <p>Workspace permissions could not be refreshed. Denied actions wait for refreshed permissions. Records for denied agents remain hidden.</p>
       <Button variant="outline" disabled={query.isFetching} onClick={() => query.refetch()}>Retry permissions</Button>
     </div>}
+    {unconfirmed && gateway?.viewer && !query.error && <div role="status" className="border-b p-4 text-sm">Checking which account is signed in. Actions are unavailable until it is confirmed.</div>}
     {hiddenAgents && !query.error && <div role="status" className="flex flex-wrap items-center gap-3 border-b p-4 text-sm">
       <p>Access to an agent changed. Its private records are hidden while permissions refresh.</p>
       <Button variant="outline" onClick={recheckAccess}>Check access again</Button>
@@ -91,8 +110,6 @@ const subscribeHash = (notify: () => void) => {
 };
 function App() {
   const hash = useSyncExternalStore(subscribeHash, () => location.hash);
-  const example = hash.match(/^#\/explore\/(payables|treasury)(?:\/([^/?#]+))?\/?$/);
-  if (example) return <PrototypeExplorer key={example[1]} area={example[1] as "payables" | "treasury"} page={example[2] || "overview"} />;
   return <GatewayPage activity={hash === "#activity"} />;
 }
 

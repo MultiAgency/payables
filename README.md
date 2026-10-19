@@ -2,8 +2,10 @@
 
 Standalone Payables demo: https://payables.multiagency.ai
 
-The builder onboarding skill is prepared at `web/public/skill.md` and included in the web build
-at `/skill.md`. Hosted availability requires deployment and has not been verified.
+The owner-side workflow skill (`payables-owner-workflow`) is prepared at `web/public/skill.md`, for the
+owner's coding agent working through agreements, work orders, compensation review and payout approval.
+Releases serve it at `/skill.md` only when their manifest declares that entry. Supplier onboarding moved
+to Invoices, which serves its own `/skill.md` on the supplier host. Hosted availability has not been verified.
 
 Explore confidential DAO payment intake and isolated purchase-order agents through explicitly
 labeled example walkthroughs. Regular NEAR accounts and eligible Sputnik DAO members can enter

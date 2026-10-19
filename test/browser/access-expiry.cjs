@@ -1,8 +1,9 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** Authorization loss must clear only the affected private views, including during gateway refresh. */
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium } = require('./fixtures/browser.cjs');
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 const root = path.resolve(process.argv[2] || 'web/dist');
 
 (async () => {
@@ -32,7 +33,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
           state.gatewayReads++;
           if (state.gatewayUnavailable) return route.fulfill({ status: 503, json: { error: 'Fixture permission metadata unavailable' } });
           if (state.denied) { state.waiting.push(route); return; }
-          return route.fulfill({ json: gateway() });
+          return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, ...gateway() } });
         }
         if (p === '/gw/proposals') {
           if (state.holdProposals) { state.waitingProposals.push(route); return; }
@@ -60,24 +61,24 @@ const root = path.resolve(process.argv[2] || 'web/dist');
           const payee = agent === 'payables' ? 'private-payee.near' : 'healthy-payee.near';
           const values = {
             instance: { agentId: agent, executor: true },
-            setup: { agentId: agent, executor: true, wallet: `${agent}.near`, owner: { type: 'near', account_id: 'owner.near' }, grant: null, dao: null },
+            setup: { agentId: agent, executor: true, wallet: `${agent}.near`, owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: null, dao: null },
             overview: { agentId: agent, area: 'payables', digest: 'fixture', notInForce: null, agreed: [payee], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 },
-              book: [], grants: [], policy: { revision: 1, status: 'APPLIED', policy: { actions: ['transfer'], assets: 'any', budget: {}, owner_approval: true, confidential: true,
+              book: [], grants: [], policy: { wallet_id: 'agent.near', provider_policy_synced: true, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null } }, timelock: { delay_ms: 0, scheduled_count: 0 } }, revision: 1, status: 'APPLIED', policy: { frozen: false, limits: {}, max_actions_per_hour: null, timelock_ms: 0, actions: ['transfer'], assets: 'any', budget: { daily_usd: null, weekly_usd: null, monthly_usd: null}, owner_approval: true, confidential: true,
                 destinations: { mode: 'only', list: [{ action: 'transfer', address: payee, confidential: true }] } } } },
-            'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 0 },
-            held: [{ correlationId: `${agent}-payment`, at: new Date().toISOString(), request: { recipient: payee, asset: 'usdc', amount: '1000000' } }],
+            'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 0, lastRun: null, nextRun: null },
+            held: [{ correlationId: `${agent}-payment`, at: new Date().toISOString(), request: { recipient: payee, asset: 'usdc', amount: '1000000' }, approvalId: 'approval-fixture', kind: 'pay' }],
             unresolved: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/actions': [], 'owner/pending': [], policyHistory: [],
             activity: options.activityHistory ? [{ at: '2026-10-01T00:00:00Z', kind: 'payout', correlationId: `${agent}-retained-operation`,
-              request: { recipient: payee, asset: 'usdc', amount: '1000000' }, status: 'SUCCESS' }] : [],
+              request: { recipient: payee, asset: 'usdc', amount: '1000000' }, status: 'SUCCESS', approvalId: 'approval-fixture' }] : [],
           };
           if (options.payment) Object.assign(values, {
             activity: [], invoices: [], paymentHistory: { items: [], complete: true },
-            paymentStatus: { status: 'PROCESSING', request: { recipient: payee, asset: 'usdc', amount: '1000000' }, approvalId: 'fixture-approval' },
-            'owner/pending': [{ correlationId: 'fixture-owner-action', hash: 'fixture-proposal-hash', state: 'waiting',
+            paymentStatus: { status: 'PROCESSING', request: { recipient: payee, asset: 'usdc', amount: '1000000' }, approvalId: 'fixture-approval', failureCode: null, createdAt: null, updatedAt: null, expiresAt: null, detailError: null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null } },
+            'owner/pending': [{ correlationId: 'fixture-owner-action', type: 'approval_vote', expiresAt: '2099-01-01T00:00:00Z', intent: { standard: 'nep413', payload: { message: '{}', recipient: 'fixture', nonce: 'fixture' } }, delegate: null, hash: 'fixture-proposal-hash', state: 'waiting',
               payment: { correlationId: `${agent}-payment`, verdict: 'approve' } }],
             'owner/status': { stage: 'voting', expiresAt: '2099-01-01T00:00:00Z' },
           });
-          return route.fulfill({ json: { json: rpcValue(values, method) } });
+          return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
         }
         if (p.startsWith('/static/')) return route.fulfill({ path: root + p,
           contentType: p.endsWith('.js') ? 'application/javascript' : p.endsWith('.css') ? 'text/css' : 'font/woff2' });

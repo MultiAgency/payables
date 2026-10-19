@@ -1,4 +1,6 @@
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { strategyStatus } = require('./fixtures/outputs.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
+const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 /** Offline browser regressions. Every request is fulfilled by a fixture or aborted.
  * PLAYWRIGHT_MODULE=/path/to/playwright-core BROWSER_EXECUTABLE=/path/to/chrome
  * node test/browser/recovery-gaps.cjs /path/to/build
@@ -23,22 +25,22 @@ const results = [];
       await page.route('**/*', async route => {
         const u=new URL(route.request().url()), p=u.pathname;
         if(u.hostname!=='frontend.test') return route.abort();
-        if(p==='/gw/me') return route.fulfill({json:{agents:[{name:'payables',owner:'owner.near',dao:false}],invoices:null,viewer:{account:'owner.near',access:{payables:{canSign:true,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
+        if(p==='/gw/me') return route.fulfill({json:{ capabilities: HOST_CAPABILITIES,agents:[{name:'payables',owner:'owner.near',dao:false}],invoices:null,viewer:{account:'owner.near',access:{payables:{canSign:true,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
         if(p.includes('/rpc/')) {
           const method=p.split('/rpc/')[1];
           if(['owner/prepare','owner/submit','pay','recover'].includes(method)) writes.push(method);
-          if((scenario==='overview-error' && method==='overview') || (scenario==='treasury-error' && method==='treasury/get') || (scenario==='treasury-read-error' && method==='owner/actions')) return route.fulfill({status:500,json:{json:{defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'}}});
+          if((scenario==='overview-error' && method==='overview') || (scenario==='treasury-error' && method==='treasury/get') || (scenario==='treasury-read-error' && method==='owner/actions')) return route.fulfill({status:500,json:{ json: {defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'} }});
           const held=treasury || scenario.startsWith('wallet-');
           const values={
-            get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:'owner.near'},grant:{label:'payout',expiresAt},dao:treasury?{id:'fixture.sputnik-dao.near',owner:{account_id:'owner.near'}}:null},
-            overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:'0',confidential:'10000000',usd:10,price:1}],policy:{policy:{actions:treasury?['swap','transfer']:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{},limits:{}},usage:{budget:{}},cooldowns:{}}},
-            'treasury/get':null,held:held?[{at,kind:'remote',request,correlationId:'payment',approvalId:'approval'}]:[],unresolved:[],activity:[{at,kind:'payout',request,correlationId:'recorded-payment',status:'PROCESSING'}],'inbox/list':[],'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':[],'owner/pending':[],
-            'owner/actions':scenario==='treasury-ready'?[]:[{correlationId:'owner-record',type:'approval_vote',signer:treasury?'dao':'wallet',stage:scenario==='treasury-prepared'?'prepared':scenario==='treasury-succeeded'||scenario.startsWith('wallet-')?'settled':'submitted',expiresAt:scenario==='treasury-prepared'?expiresAt:'2020-01-01T00:00:00Z',ownerSucceeded:scenario==='treasury-succeeded'||scenario.startsWith('wallet-'),status:scenario==='wallet-rejected'?'FAILED':null,payment:{correlationId:'payment',verdict:scenario==='wallet-rejected'?'reject':'approve'}}],
+            get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:'owner.near', public_key: 'ed25519:fixture'},grant:{label:'payout',expiresAt, id: 'grant-fixture'},dao:treasury?{id:'fixture.sputnik-dao.near',owner:{account_id:'owner.near', type: 'near', public_key: 'ed25519:fixture'}, funded: true}:null},
+            overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:0n,confidential:10000000n,usd:10,price:1, priceUpdatedAt: null, priceExpiresAt: null}],policy:{policy:{actions:treasury?['swap','transfer']:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{ daily_usd: null, weekly_usd: null, monthly_usd: null},limits:{}, confidential: true, owner_approval: true, max_actions_per_hour: null, timelock_ms: 0},usage:{budget:{ daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 }},cooldowns:{ policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true}, grants: []},
+            'treasury/get':null,held:held?[{at,kind:'remote',request,correlationId:'payment',approvalId:'approval'}]:[],unresolved:[],activity:[{at,kind:'payout',request,correlationId:'recorded-payment',status:'PROCESSING', approvalId: 'approval-fixture'}],'inbox/list':[],'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':[],'owner/pending':[],
+            'owner/actions':scenario==='treasury-ready'?[]:[{correlationId:'owner-record',type:'approval_vote',signer:treasury?'dao':'wallet',stage:scenario==='treasury-prepared'?'prepared':scenario==='treasury-succeeded'||scenario.startsWith('wallet-')?'settled':'submitted',expiresAt:scenario==='treasury-prepared'?expiresAt:'2020-01-01T00:00:00Z',ownerSucceeded:scenario==='treasury-succeeded'||scenario.startsWith('wallet-'),status:scenario==='wallet-rejected'?'FAILED':null,payment:{correlationId:'payment',verdict:scenario==='wallet-rejected'?'reject':'approve'}, failureCode: null}],
             paymentHistory:{items:[],complete:true},
-            paymentStatus:{status:scenario==='wallet-rejected'?'FAILED':scenario==='wallet-approved'?'SUCCESS':'PENDING_APPROVAL',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:'approval',expiresAt,detailError:null},
-            'autopilot/get':{on:false,everyMin:60,maxUsd:10},'autopilot/evidence':{ticks:[]},'strategy/get':{},invoices:[],ledger:[],reconcileBooks:[],
+            paymentStatus:{status:scenario==='wallet-rejected'?'FAILED':scenario==='wallet-approved'?'SUCCESS':'PENDING_APPROVAL',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:'approval',expiresAt,detailError:null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null }},
+            'autopilot/get':{on:false,everyMin:60,maxUsd:10, lastRun: null, nextRun: null},'autopilot/evidence':{ticks:[], corrupt: []},'strategy/get':strategyStatus(),invoices:[],ledger:[],reconcileBooks:[],
           };
-          return route.fulfill({json:{json:rpcValue(values, method)}});
+          return route.fulfill({json:rpcAnswer(method, rpcValue(values, method))});
         }
         if(p.startsWith('/static/')) return route.fulfill({path:root+p,contentType:p.endsWith('.js')?'application/javascript':p.endsWith('.css')?'text/css':'font/woff2'});
         return route.fulfill({path:root+'/index.html',contentType:'text/html'});
@@ -50,7 +52,7 @@ const results = [];
           await approval.waitFor();
           if(scenario==='treasury-ready') assert.equal(await approval.isEnabled(),true);
           else {
-            if(scenario==='treasury-read-error') await page.getByText('Fixture read unavailable',{exact:false}).first().waitFor();
+            if(scenario==='treasury-read-error') await page.getByText(UNAVAILABLE,{exact:false}).first().waitFor();
             else await page.getByRole('link',{name:'Review the existing owner action',exact:true}).waitFor();
             assert.equal(await approval.isEnabled(),false);
             assert.equal(await page.getByRole('button',{name:'Propose rejection',exact:true}).isEnabled(),false);

@@ -1,3 +1,4 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** Offline public overview regressions. Every request is intercepted; no server or wallet starts. */
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -20,7 +21,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       const url = new URL(route.request().url());
       requests.push(url.pathname);
       if (url.origin !== 'http://frontend.test') return route.abort();
-      if (url.pathname === '/gw/me') return route.fulfill({ json: {
+      if (url.pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES,
         agents: [], invoices: null, viewer: null,
       } });
       if (url.pathname.startsWith('/static/')) return route.fulfill({ path: root + url.pathname,
@@ -40,34 +41,6 @@ const root = path.resolve(process.argv[2] || 'web/dist');
 
   {
     const width = 390;
-    await check('legacy public links show static requirements without simulated actions', width, async (page, requests) => {
-      for (const [area, pages] of [
-        ['payables', ['overview', 'agreements', 'invoices', 'activity', 'policy']],
-        ['treasury', ['overview', 'automations', 'activity', 'policy']],
-      ]) {
-        const name = area === 'payables' ? 'Payables' : 'Portfolio';
-        for (const section of pages) {
-          await page.goto(`http://frontend.test/#/explore/${area}/${section}`);
-          await page.getByRole('heading', { level: 1 }).waitFor();
-          assert.equal(await page.getByRole('region', { name: /simulation$/ }).count(), 0, 'fictional execution controls have been retired');
-          assert.equal(await page.getByRole('heading', { level: 1 }).innerText(), `${name} overview`);
-          assert.ok(await page.getByRole('main').evaluate(element => element === document.activeElement));
-          // Legacy hashes share the same overview. Check its content once per area.
-          if (section !== 'overview') continue;
-          assert.ok(await page.getByText('Known limitations', { exact: true }).isVisible());
-          const requirements = page.getByText('View requirements', { exact: true });
-          if (!await requirements.evaluate(element => element.closest('details').open)) await requirements.click();
-          await page.getByRole('heading', { name: 'Capability targets', exact: true }).waitFor();
-          await page.getByRole('heading', { name: 'Safety targets', exact: true }).waitFor();
-          assert.equal(await page.getByRole('button').count(), 0);
-          assert.equal(await page.locator('input, select, [role="radio"]').count(), 0);
-          assert.doesNotMatch(await page.locator('body').innerText(), /Invoices filed at|The autopilot executed a rebalance alone|proposal #|AG-UI|fictional|simulat/i);
-          assert.equal(await page.locator('a[href*="/requests/"]').count(), 0);
-          await assertResponsive(page, `${name} public requirements`);
-        }
-      }
-      assert.deepEqual(requests.filter(url => /\/gw\/|\/rpc\/|manifest\.json/.test(url)), []);
-    });
     await check('public landing leads directly to workflows and requirement stages', width, async (page, requests) => {
       await page.goto('http://frontend.test/');
       await page.getByRole('heading', { level: 1 }).waitFor();
@@ -83,17 +56,6 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       }
       assert.deepEqual(requests.filter(url => /\/rpc\/|manifest\.json/.test(url)), []);
       await assertResponsive(page, 'public landing');
-    });
-    await check('legacy public navigation preserves focus and recovers unknown sections', width, async (page, requests) => {
-      await page.goto('http://frontend.test/a/treasury/#/explore/treasury/missing');
-      await page.getByRole('heading', { name: 'Page not found', exact: true }).waitFor();
-      await page.getByRole('link', { name: 'View Portfolio overview', exact: true }).click();
-      await page.getByRole('heading', { name: 'Portfolio overview', exact: true }).waitFor();
-      assert.ok(await page.getByRole('main').evaluate(element => element === document.activeElement));
-      await page.getByRole('link', { name: 'Explore Payables', exact: true }).click();
-      await page.getByRole('heading', { name: 'Payables overview', exact: true }).waitFor();
-      assert.ok(await page.getByRole('main').evaluate(element => element === document.activeElement));
-      assert.deepEqual(requests.filter(url => /\/gw\/|\/rpc\/|manifest\.json/.test(url)), []);
     });
   }
   console.log(JSON.stringify(results, null, 2));

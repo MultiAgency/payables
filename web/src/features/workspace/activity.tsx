@@ -10,6 +10,7 @@ import { ago, kindOf, type Overview } from "../../shared/format";
 import { refusalText } from "../../shared/words";
 import { Badge, Button, CopyButton, Details, ErrorBox, Loading, Section } from "../../shared/ui";
 import { BooksTable, downloadLedger, isProbe, Row } from "../activity/activity";
+import { PORTFOLIO, useProvides } from "../../app/capabilities";
 import { OwnerActionRecord } from "../owner/owner-actions";
 import { describeOperation, describeOwner, describeRun, matchesHistory, type HistoryFilters } from "./activity-filters";
 
@@ -20,7 +21,7 @@ function AgentBooks({ agent, book }: { agent: GatewayAgent; book: Overview["book
   const [exporting, setExporting] = useState(false);
   const exportController = useRef<AbortController | null>(null);
   const api = clientFor(`/a/${agent.name}`);
-  const books = useQuery({ ...queriesFor(api, ["fleet", agent.name]).books, enabled: open, retry: false });
+  const books = useQuery({ ...queriesFor(api, `/a/${agent.name}`).books, enabled: open, retry: false });
   useEffect(() => {
     const unsubscribe = onAccessDenial(denial => {
       if (denial.scope === "session" || denial.scope === "agent" && denial.base === `/a/${agent.name}`)
@@ -60,13 +61,14 @@ function AgentBooks({ agent, book }: { agent: GatewayAgent; book: Overview["book
 /** One query set per agent, shared by unfiltered checks and filtered history. */
 export function useHistory(agents: GatewayAgent[]) {
   const access = useAccessState();
-  const reads = agents.map(agent => queriesFor(clientFor(`/a/${agent.name}`), ["fleet", agent.name]));
+  const reads = agents.map(agent => queriesFor(clientFor(`/a/${agent.name}`), `/a/${agent.name}`));
   const activities = useQueries({ queries: reads.map(read => ({ ...read.activity, retry: false, refetchInterval: 30_000 })) });
   const owners = useQueries({ queries: reads.map(read => ({ ...read.ownerActions, retry: false, refetchInterval: 30_000 })) });
   const unresolved = useQueries({ queries: reads.map(read => ({ ...read.unresolved, retry: false })) });
   const overviews = useQueries({ queries: reads.map(read => ({ ...read.overview, retry: false, staleTime: 30_000 })) });
   const treasury = agents.map((agent, i) => agent.area ? agent.area === "treasury" : overviews[i]?.data ? kindOf(overviews[i]!.data!) === "treasury" : areaName(agent) === "Portfolio");
-  const runs = useQueries({ queries: reads.map((read, i) => ({ ...read.runs, enabled: treasury[i], retry: false, refetchInterval: 30_000 })) });
+  const portfolio = useProvides(PORTFOLIO);
+  const runs = useQueries({ queries: reads.map((read, i) => ({ ...read.runs, enabled: treasury[i] && portfolio, retry: false, refetchInterval: 30_000 })) });
   return agents.map((agent, i) => {
     const checks = [activities[i]!, owners[i]!, unresolved[i]!, overviews[i]!, ...(treasury[i] ? [runs[i]!] : [])];
     return { agent, activity: activities[i]!, owners: owners[i]!, unresolved: unresolved[i]!, overview: overviews[i]!, runs: runs[i]!, treasury: treasury[i]!,

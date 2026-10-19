@@ -1,3 +1,4 @@
+const { rpcAnswer } = require('./fixtures/rpc.cjs');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const { runTask } = require('./fixtures/task.cjs');
@@ -14,12 +15,12 @@ async function ownerWorkOrder(browser, root) {
   const { setup, overview, budget } = workspaceEvidence({});
   let records = [];
   const open = workspaceOpener(root, { budget, values(kind) { return {
-    instance: { agentId: 'fixture', executor: false }, setup: { ...setup, dao: { id: 'fixture.sputnik-dao.near', owner: setup.owner } }, overview: overview(kind),
+    instance: { agentId: 'fixture', executor: false }, setup: { ...setup, dao: { id: 'fixture.sputnik-dao.near', owner: setup.owner, funded: true } }, overview: overview(kind),
     'treasury/get': null, held: [], unresolved: [], 'inbox/list': [], 'agreements/list': [], invoices: [], activity: [],
-    'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true }, 'autopilot/get': { on: false },
+    'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true }, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
     'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': records,
     'workOrders/get': { order: records[0], agentId: null, wallet: null, balance: null, policyReady: false,
-      grant: null, invoice: null, ownerActions: [], approval: null, error: null },
+      grant: null, invoice: null, ownerActions: [], approval: null, error: null, executor: true, progress: { stage: 'authorize', expired: false, residual: null, excess: null } },
   }; } });
   const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
   const { page, calls, errors } = await open(context, '/a/payables/payees', { dao: true });
@@ -31,7 +32,7 @@ async function ownerWorkOrder(browser, root) {
     assert.equal(input.amount, '1250000');
     assert.equal(input.payee, 'payee.near');
     records = [{ ...order, ...input }];
-    return route.fulfill({ json: { json: records[0] } });
+    return route.fulfill({ json: rpcAnswer('workOrders/create', records[0]) });
   });
   await page.getByText('Create a work order', { exact: true }).click();
   await page.getByRole('button', { name: 'Save work order', exact: true }).click();
@@ -48,6 +49,15 @@ async function ownerWorkOrder(browser, root) {
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   assert.ok(!calls.includes('workOrders/prepare'));
   assert.ok((await page.getByRole('link', { name: 'Open work order on the invoice page' }).getAttribute('href')).includes(records[0].id));
+  // A deep link opens that work order without a click.
+  const linked = await open(context, `/a/payables/payees?order=${records[0].id}`, { dao: true });
+  await linked.page.getByRole('button', { name: 'Authorize work order', exact: true }).waitFor();
+  await linked.page.close();
+  // A link to an order this agent doesn't hold opens nothing and says so.
+  const missing = await open(context, '/a/payables/payees?order=cccccccc-cccc-4ccc-8ccc-cccccccccccc', { dao: true });
+  await missing.page.getByText("This link names a work order that isn't recorded for this agent. Nothing is opened.", { exact: true }).waitFor();
+  assert.equal(await missing.page.getByRole('button', { name: 'Authorize work order', exact: true }).count(), 0, 'no other order is opened');
+  await missing.page.close();
   await assertResponsive(page, 'work-order-owner');
   await page.screenshot({ path: '/tmp/work-order-owner.png', fullPage: true });
   assert.deepEqual(errors, []);

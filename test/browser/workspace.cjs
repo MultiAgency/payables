@@ -6,22 +6,24 @@ const { openWorkspaceNavigation } = require("./fixtures/navigation.cjs");
  * All requests are intercepted. No server, wallet, or executor is started.
  */
 const assert = require('node:assert/strict');
+const { assertHidden } = require('./fixtures/hidden.cjs');
 const path = require('node:path');
 const { chromium } = require('./fixtures/browser.cjs');
 const root = path.resolve(process.argv[2] || 'web/dist');
 const { workspaceEvidence, workspaceOpener } = require('./fixtures/workspace.cjs');
+const { PAYABLES_HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { budget, setup, overview } = workspaceEvidence({});
 
 (async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   try {
   const open = workspaceOpener(root, { budget, values(kind, options, state, run) {
-    const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' } }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved' }] : [],
-      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
-      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
-      'autopilot/evidence': { ticks: [run] } };
+    const values = { instance: { agentId: 'fixture', executor: !options.approveOnly }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' ? [{ at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near' }, correlationId: 'fixture-held', approvalId: 'fixture-approval', kind: 'pay' }] : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved', kind: 'pay', request: {}, status: null, sent: true }] : [],
+      'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ note: '', id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [], paymentHistory: { items: [], complete: true },
+      'autopilot/get': { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+      'autopilot/evidence': { ticks: [run], corrupt: [] } };
     if (options.unmanaged) {
-      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: '1000000', decimals: 6, usd: null }];
+      values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: 1000000n, decimals: 6, usd: null, price: null, priceUpdatedAt: null, priceExpiresAt: null }];
       values.overview.policy.policy.assets = options.excluded ? ['usdc'] : 'any';
     }
     return values;
@@ -37,6 +39,29 @@ const { budget, setup, overview } = workspaceEvidence({});
       assert.deepEqual(errors, []);
       await context.close();
       console.log('PASS accessible-agent navigation and member context');
+    }
+    {
+      // A payables-only host (P2): no Portfolio capabilities, though the gateway still lists a Treasury agent.
+      const portfolioOnly = /^(strategy\/|autopilot\/(evidence|log|set|enable|tick)|rebalance$|externalPlan$|executePlan$|steward\/|ledger$)/;
+      const context = await browser.newContext();
+      const { page, requests, calls, errors } = await open(context, '/a/payables/', { capabilities: PAYABLES_HOST_CAPABILITIES });
+      await page.getByRole('heading', { name: 'Payables · Payments', exact: true }).waitFor();
+      await openWorkspaceNavigation(page);
+      assert.equal(await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Portfolio', exact: true }).count(), 0, 'Portfolio agent not presented');
+      await page.keyboard.press('Escape');
+      await page.goto('http://frontend.test/a/payables/funding');
+      await page.getByRole('heading', { name: 'Payables · Balances & funding', exact: true }).waitFor();
+      await page.getByText('Shield public funds', { exact: true }).waitFor();
+      await page.goto('http://frontend.test/a/payables/automations');
+      await page.getByText("Portfolio isn't available on this host. Its records are unchanged.", { exact: true }).waitFor();
+      await page.goto('http://frontend.test/a/treasury/');
+      await page.getByText("Portfolio isn't available on this host. Its records are unchanged.", { exact: true }).waitFor();
+      assert.deepEqual(calls.filter(call => portfolioOnly.test(call)), [], 'no Portfolio-only requests');
+      assert.ok(calls.includes('treasury/get'), 'owner-treasury reads continue (neutral)');
+      assert.ok(requests.every(path => !path.startsWith('/a/treasury/rpc/') || /\/rpc\/(setup|overview|instance)$/.test(path)), 'a Treasury agent is only identified, never read for Portfolio');
+      assert.deepEqual(errors, []);
+      await context.close();
+      console.log('PASS payables-only host: Portfolio hidden, zero Portfolio-only requests, owner-treasury kept');
     }
     {
       const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
@@ -83,7 +108,7 @@ const { budget, setup, overview } = workspaceEvidence({});
       await page.getByRole('heading', { name: 'Payables · Payments', exact: true }).waitFor();
       const area = page.getByRole('navigation', { name: 'Area', exact: true });
       assert.deepEqual(await area.getByRole('link').allTextContents(), ['Payments', 'Agreements']);
-      assert.equal(await page.getByRole('dialog', { name: 'Workspace navigation' }).isVisible(), false);
+      await assertHidden(page.getByRole('dialog', { name: 'Workspace navigation' }));
       await page.getByRole('navigation', { name: 'Area utilities', exact: true }).getByRole('link', { name: 'Policy & grants', exact: true }).waitFor();
       await openWorkspaceNavigation(page);
       assert.equal(await nav().getByRole('link', { name: 'Payables', exact: true }).getAttribute('aria-current'), 'page');

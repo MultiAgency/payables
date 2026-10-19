@@ -15,7 +15,7 @@ import { SignIn } from "../app/session";
 type Flow = "dao" | "po";
 const scenarios = {
   dao: ["Agreed contractor", "New payee", "Over limit, unanimous approval"],
-  po: ["Agreed supplier", "Changed supplier", "Changed amount", "Past the deadline"],
+  po: ["Agreed payee", "Changed payee", "Changed amount", "Past the deadline"],
 };
 const stages = {
   dao: ["Request received", "Agreement checked", "First approval", "Quorum reached", "Payment recorded"],
@@ -35,7 +35,7 @@ export function PayablesDemo() {
   const reason = flow === "dao"
     ? scenario === 1 ? "This payee is outside the signed agreement. A new policy and grant agreement must be signed before payment."
       : "The $750 request exceeds the $500 ceiling. Even five approvals cannot raise a signed spending limit."
-    : scenario === 1 ? "The invoice names a different supplier. This order can pay only its agreed destination."
+    : scenario === 1 ? "The invoice names a different payee. This order can pay only its agreed destination."
       : scenario === 2 ? "The invoice requests $1,500 against a $1,250 order. Its fixed amount cannot be changed by the intake process."
         : "The payment request arrived after the grant deadline. New submissions are refused; expiry does not undo an accepted payment.";
   const description = flow === "dao" ? [
@@ -45,9 +45,9 @@ export function PayablesDemo() {
     "Two approvals meet the threshold. Approval is permission to release this payout; it is not proof of settlement.",
     "This example ends with a simulated successful payment. A real payment is complete only when its recorded provider outcome confirms it.",
   ] : [
-    "PO-1042 records one supplier, an exact $1,250 amount and a payment deadline. It has its own agent.",
+    "PO-1042 records one payee, an exact $1,250 amount and a payment deadline. It has its own agent.",
     "The example agent receives exactly $1,250. It cannot spend from the main treasury, whose balance is never shown here.",
-    "The supplier, amount and deadline match. The invoice retains one payment identity so retries follow the same operation.",
+    "The payee, amount and deadline match. The invoice retains one payment identity so retries follow the same operation.",
     "This example records one simulated payment after owner approval. The order budget is spent; the same invoice cannot create another payment.",
     "The grant window closes. No new payment may start under it. Expiry does not recall an accepted payment or automatically refund residual funds.",
   ];
@@ -74,7 +74,7 @@ export function PayablesDemo() {
           </ToggleGroupItem>
           <ToggleGroupItem value="po" className="h-auto min-h-20 justify-start gap-3 px-4 py-4">
             <Wallet data-icon="inline-start" aria-hidden="true" />
-            <span className="flex flex-col gap-1 whitespace-normal text-left"><span>Purchase-order agents</span><span className="font-normal">One supplier. One budget. One payment identity.</span></span>
+            <span className="flex flex-col gap-1 whitespace-normal text-left"><span>Purchase-order agents</span><span className="font-normal">One payee. One budget. One payment identity.</span></span>
           </ToggleGroupItem>
         </ToggleGroup>
       </section>
@@ -109,7 +109,7 @@ export function PayablesDemo() {
               <Separator />
               <dl className="grid gap-5 sm:grid-cols-2">
                 <div><dt className="text-sm text-muted-foreground">{flow === "dao" ? "Approval threshold" : "Dedicated budget"}</dt><dd className="mt-1 font-medium">{flow === "dao" ? "2 of 5 members" : "$1,250 USDC"}</dd></div>
-                <div><dt className="text-sm text-muted-foreground">{flow === "dao" ? "Requester can see" : "Authorized destination"}</dt><dd className="mt-1 font-medium">{flow === "dao" ? "Invoice reference and status" : "One agreed supplier account"}</dd></div>
+                <div><dt className="text-sm text-muted-foreground">{flow === "dao" ? "Requester can see" : "Authorized destination"}</dt><dd className="mt-1 font-medium">{flow === "dao" ? "Invoice reference and status" : "One agreed payee account"}</dd></div>
               </dl>
               <Separator />
               <div aria-live="polite" aria-atomic="true">
@@ -139,7 +139,7 @@ export function PayablesDemo() {
         <div className="mt-4 flex max-w-prose flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
           <p>The preview illustrates the intended workflows. Its approvals, balances and outcomes are examples, not chain or provider evidence. The real workspace uses retained operation records and explicit signatures.</p>
           <p>Live flows currently use USDC and NEAR Intents recipient accounts. DAO membership is hidden from the intake interface; public DAO governance can still reveal membership. This demo does not prove that every observer is unable to reconstruct payment relationships.</p>
-          <p>Purchase-order isolation and refusal paths have offline tests. The hosted lifecycle has not yet been observed end to end on mainnet. Supplier auto-conversion and nightly forwarding are not implemented. Grant expiry blocks new work; it does not recall an accepted payment.</p>
+          <p>Purchase-order isolation and refusal paths have offline tests. The hosted lifecycle has not yet been observed end to end on mainnet. Payee auto-conversion and nightly forwarding are not implemented. Grant expiry blocks new work; it does not recall an accepted payment.</p>
         </div>
       </details>
       <Separator />

@@ -29,7 +29,7 @@ function LinkTreasury() {
   const wallet = useWallet();
   const daoWallet = dao.use();
   const [accountId, setAccountId] = useState("");
-  const link = useAttempt([["treasury"], ["setup"]]);
+  const link = useAttempt([queries.orpc.treasury.key(), queries.setup.queryKey]);
   const canLink = useCanCall("treasury/link");
   const [submitted, setSubmitted] = useState(false);
 
@@ -345,7 +345,7 @@ function ConfidentialSetting({ treasury }: { treasury: Treasury }) {
 export function TreasurySection() {
   const { treasury, data, setup } = useAgent();
   const linked = useQuery({ ...queries.treasury, enabled: false });
-  const unlink = useAttempt([["treasury"], ["setup"]]);
+  const unlink = useAttempt([queries.orpc.treasury.key(), queries.setup.queryKey]);
   const empty = data.book.every((h) => BigInt(h.public) + BigInt(h.confidential) === 0n);
   if (linked.error) return <Section title="Receive funds"><p>Linked account could not be checked.</p><QueryError error={linked.error} retry={() => linked.refetch()} /></Section>;
   if (linked.isPending) return <Section title="Receive funds"><Loading label="Checking linked account…" /></Section>;

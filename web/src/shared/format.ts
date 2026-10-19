@@ -1,7 +1,7 @@
 import type { client } from "./client";
-import { ASSETS } from "../../../src/policy.js";
+import { ASSETS } from "@multiagency/sdk";
 import type { Kind } from "../features/evidence/beats";
-import { totalUsd } from "../../../src/valuation.js";
+import { totalUsd } from "./prices";
 export { exactPayment, fromUnits } from "../features/payables/payment-copy";
 
 export type Overview = Awaited<ReturnType<typeof client.overview>>;

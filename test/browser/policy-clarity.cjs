@@ -1,4 +1,5 @@
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
+const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 /** Offline policy presentation checks: no server, executor or signer is started. */
 const assert = require('node:assert/strict');
 const { chromium } = require('./fixtures/browser.cjs');
@@ -15,7 +16,7 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
    await page.route('**/*', async route => {
     const { hostname, pathname: p } = new URL(route.request().url());
     if (hostname !== 'frontend.test') return route.abort();
-    if (p === '/gw/me') return route.fulfill({ json: { invoices: null, agents: [{ name: 'treasury', area: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
+    if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, invoices: null, agents: [{ name: 'treasury', area: 'treasury', owner: 'owner.near', dao: false }], viewer: { account: 'owner.near', access: { treasury: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
     if (p.includes('/rpc/')) {
      const method = p.split('/rpc/')[1]; calls.push(method);
      if (denyHistory && method === 'policyHistory') return route.fulfill({ status: 403, json: { error: 'Access denied' } });
@@ -26,14 +27,14 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
      if (scenario === 'history-error' && method === 'policyHistory') return route.fulfill({ status: 503, json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Revision evidence unavailable' } } });
      const values = {
       instance: { agentId: 'fixture', area: 'treasury', executor: scenario !== 'approve-only' },
-      setup: { agentId: 'fixture', executor: scenario !== 'approve-only', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: { id: 'current', label: 'treasury:fixture', expiresAt: '2099-01-01T00:00:00Z' }, dao: { id: 'owner.sputnik-dao.near', owner: { account_id: 'owner.near' } } },
-      overview: { agentId: 'fixture', area: 'treasury', digest: scenario === 'missing-evidence' ? null : 'fixture-digest', notInForce: scenario === 'missing-evidence' ? undefined : scenario === 'unsynchronized' ? 'revision 2 is not yet synchronized with the provider' : null, agreed: [], book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 },
-       grants: [{ grant_id: scenario === 'unmatched-grant' ? 'different' : 'current', label: 'treasury:fixture', expires_at: '2099-01-01T00:00:00Z', issued_at: '2026-01-01T00:00:00Z', revoked_at: null }],
-       policy: { status: 'APPLIED', revision: 2, policy: { actions: ['swap'], assets: 'any', budget: scenario === 'round-trip' ? { daily_usd: '25' } : {}, limits: scenario === 'round-trip' ? { daily: { 'unlisted-token': '123' } } : {}, frozen: false, owner_approval: false, confidential: true, destinations: { mode: 'only', list: [] } }, usage: { budget: {} }, cooldowns: {} } },
-      'treasury/get': null, 'owner/pending': [], 'owner/actions': [], unresolved: [], held: [], 'inbox/list': [], 'autopilot/get': { on: false }, policyHistory: scenario === 'history-denied' ? [{ revision: 1, status: 'APPLIED', digest: 'private-historical-digest' }] : [],
+      setup: { agentId: 'fixture', executor: scenario !== 'approve-only', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: { id: 'current', label: 'treasury:fixture', expiresAt: '2099-01-01T00:00:00Z' }, dao: { id: 'owner.sputnik-dao.near', owner: { account_id: 'owner.near', type: 'near', public_key: 'ed25519:fixture' }, funded: true } },
+      overview: { agentId: 'fixture', area: 'treasury', digest: scenario === 'missing-evidence' ? null : 'fixture-digest', notInForce: scenario === 'missing-evidence' ? null : scenario === 'unsynchronized' ? 'revision 2 is not yet synchronized with the provider' : null, agreed: [], book: [], unmanaged: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 },
+       grants: [{ agent_id: 'fixture', wallet_id: 'agent.near', owner_epoch: 1, owner_message: {}, grant_id: scenario === 'unmatched-grant' ? 'different' : 'current', label: 'treasury:fixture', expires_at: '2099-01-01T00:00:00Z', issued_at: '2026-01-01T00:00:00Z', revoked_at: null }],
+       policy: { status: scenario === 'missing-evidence' ? 'SIGNED' : 'APPLIED', revision: 2, policy: { actions: ['swap'], assets: 'any', budget: scenario === 'round-trip' ? { weekly_usd: null, monthly_usd: null, daily_usd: '25' } : { daily_usd: null, weekly_usd: null, monthly_usd: null }, limits: scenario === 'round-trip' ? { daily: { 'unlisted-token': '123' } } : {}, frozen: false, owner_approval: false, confidential: true, destinations: { mode: 'only', list: [] }, max_actions_per_hour: null, timelock_ms: 0 }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', provider_policy_synced: true } },
+      'treasury/get': null, 'owner/pending': [], 'owner/actions': [], unresolved: [], held: [], 'inbox/list': [], 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null }, policyHistory: scenario === 'history-denied' ? [{ appliedAt: null, transactionHash: null, revision: 1, status: 'APPLIED', digest: 'private-historical-digest' }] : [],
      };
      assert.ok(method in values, `Unexpected RPC ${method}`);
-     return route.fulfill({ json: { json: rpcValue(values, method) } });
+     return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
     }
     return route.fulfill({ path: p.startsWith('/static/') ? root + p : root + '/index.html' });
    });
@@ -79,7 +80,7 @@ const root = require('node:path').resolve(process.argv[2] || 'web/dist');
     await page.getByText('Budget a day: $25.00 → $24.00', { exact: true }).waitFor();
     assert.equal(await page.getByText(/^Assets:/).count(), 0);
     await page.getByRole('button', { name: 'Propose in Trezu', exact: true }).click();
-    await page.getByText('Offline fixture stops before signing', { exact: false }).waitFor();
+    await page.getByText(/The outcome is unknown: this owner\/prepare request may have taken effect/).waitFor();
     assert.equal(proposed.length, 1);
     assert.equal(proposed[0].changes.assets, 'any');
     assert.deepEqual(proposed[0].changes.limits, { daily: { 'unlisted-token': '123' } });

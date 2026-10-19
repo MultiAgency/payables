@@ -1,5 +1,6 @@
+const { HOST_CAPABILITIES } = require('./host.cjs');
 const path = require('node:path');
-const { rpcValue } = require('./rpc.cjs');
+const { rpcValue, rpcAnswer } = require('./rpc.cjs');
 
 /** Explicit read-only payment and schedule evidence for owner-facing status checks. */
 async function openOwnerStatus(browser, root, scenario, width) {
@@ -16,23 +17,23 @@ async function openOwnerStatus(browser, root, scenario, width) {
   await page.route('**/*', async route => {
     const url = new URL(route.request().url()), p = url.pathname;
     if (url.hostname !== 'frontend.test') return route.abort();
-    if (p === '/gw/me') return route.fulfill({json:{agents:[{name,owner:dao?'owner.sputnik-dao.near':'owner.near',dao}],invoices:null,viewer:{account:'owner.near',access:{[name]:{canSign:!dao,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
+    if (p === '/gw/me') return route.fulfill({json:{ capabilities: HOST_CAPABILITIES,agents:[{name,owner:dao?'owner.sputnik-dao.near':'owner.near',dao}],invoices:null,viewer:{account:'owner.near',access:{[name]:{canSign:!dao,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
     if (p === '/gw/proposals') return route.fulfill({json:[{id:42,hash:'fixture-hash',status:'Approved',votes:{'owner.near':'Approve'},submittedAt:at}]});
     if (p.includes('/rpc/')) {
       const method = p.split('/rpc/')[1];
       const values = {
-        get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:dao?'owner.sputnik-dao.near':'owner.near'},grant:{label:treasury?'treasury':'payout',expiresAt},dao:null},
-        overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:'0',confidential:'10000000',usd:10,price:1}],policy:{policy:{actions:treasury?['swap','transfer']:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{},limits:{}},usage:{budget:{}},cooldowns:{}}},
-        'treasury/get':null,held:[],unresolved:treasury?[{key:'unresolved-fixture',at,kind:'swap',sent:true,status:'PROCESSING'}]:[],activity:[],invoices:[],'inbox/list':[],'workOrders/list': [], 'agreements/list':[],
-        'owner/pending':dao?[{correlationId:'owner-record',hash:'fixture-hash',state:'done',expiresAt,payment:{correlationId:'payment',verdict:'approve'}}]:[],
+        get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:dao?'owner.sputnik-dao.near':'owner.near', public_key: 'ed25519:fixture'},grant:{label:treasury?'treasury':'payout',expiresAt, id: 'grant-fixture'},dao:null},
+        overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:0n,confidential:10000000n,usd:10,price:1, priceUpdatedAt: null, priceExpiresAt: null}],policy:{policy:{actions:treasury?['swap','transfer']:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{ daily_usd: null, weekly_usd: null, monthly_usd: null},limits:{}, confidential: true, owner_approval: true, max_actions_per_hour: null, timelock_ms: 0},usage:{budget:{ daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 }},cooldowns:{ policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true}, grants: []},
+        'treasury/get':null,held:[],unresolved:treasury?[{key:'unresolved-fixture',at,kind:'swap',sent:true,status:'PROCESSING', request: {}}]:[],activity:[],invoices:[],'inbox/list':[],'workOrders/list': [], 'agreements/list':[],
+        'owner/pending':dao?[{correlationId:'owner-record',type:'approval_vote',intent:{standard:'nep413',payload:{message:'{}',recipient:'fixture',nonce:'fixture'}},delegate:null,hash:'fixture-hash',state:'done',expiresAt,payment:{correlationId:'payment',verdict:'approve'}}]:[],
         'owner/status':{stage:'submitted',status:'SUCCESS'},
-        'owner/actions':['approved','rejected'].includes(scenario)?[{correlationId:'owner-record',type:'approval_vote',signer:'wallet',stage:'settled',expiresAt,ownerSucceeded:true,status:scenario==='rejected'?'FAILED':'SUCCESS',payment:{correlationId:'payment',verdict:scenario==='rejected'?'reject':'approve'}}]:[],
+        'owner/actions':['approved','rejected'].includes(scenario)?[{correlationId:'owner-record',type:'approval_vote',signer:'wallet',stage:'settled',expiresAt,ownerSucceeded:true,status:scenario==='rejected'?'FAILED':'SUCCESS',payment:{correlationId:'payment',verdict:scenario==='rejected'?'reject':'approve'}, failureCode: null}]:[],
         paymentHistory:{items:[{correlationId:'payment',at}],complete:true},
-        paymentStatus:{status:scenario==='rejected'?'FAILED':'SUCCESS',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:scenario==='unknown'?null:'approval',expiresAt,detailError:null},
-        'autopilot/get':{on:scenario==='schedule-on',everyMin:60,maxUsd:10},'autopilot/evidence':{ticks:[]},
+        paymentStatus:{status:scenario==='rejected'?'FAILED':'SUCCESS',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:scenario==='unknown'?null:'approval',expiresAt,detailError:null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null }},
+        'autopilot/get':{on:scenario==='schedule-on',everyMin:60,maxUsd:10, lastRun: null, nextRun: null},'autopilot/evidence':{ticks:[], corrupt: []},
       };
       if (!(method in values)) { writes.push(method); return route.abort(); }
-      return route.fulfill({json:{json:rpcValue(values, method)}});
+      return route.fulfill({json:rpcAnswer(method, rpcValue(values, method))});
     }
     if (p.startsWith('/static/')) return route.fulfill({path:root+p,contentType:p.endsWith('.js')?'application/javascript':p.endsWith('.css')?'text/css':'font/woff2'});
     return route.fulfill({path:path.join(root,'index.html'),contentType:'text/html'});

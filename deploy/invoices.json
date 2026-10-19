@@ -1,6 +1,14 @@
 {
-  "host": "invoices.multiagency.ai",
+  "host": "localhost",
   "portal": "invoices",
-  "selfService": { "maxAgents": 10, "firstPort": 9000 },
-  "agents": []
+  "agents": [
+    {
+      "name": "payout",
+      "area": "payables",
+      "owner": "example.near",
+      "envFile": ".env.payout",
+      "port": 8790,
+      "executor": false
+    }
+  ]
 }

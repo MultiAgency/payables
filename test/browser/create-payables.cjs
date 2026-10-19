@@ -1,3 +1,4 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
 
@@ -9,7 +10,7 @@ async function createPayables(browser, root) {
     await page.route('**/*', async route => {
       const { hostname, pathname } = new URL(route.request().url());
       if (hostname !== 'frontend.test') return route.abort();
-      if (pathname === '/gw/me') return route.fulfill({ json: { selfService: true, agents: [], invoices: null, viewer: { account: 'alice.near', access: {} } } });
+      if (pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, selfService: true, agents: [], invoices: null, viewer: { account: 'alice.near', access: {} } } });
       if (pathname === '/gw/payables') {
         requests.push(route.request().postDataJSON());
         return route.fulfill({ status: 503, json: { error: 'Workspace reserved. Continue again to reopen it.' } });

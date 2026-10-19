@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
-import type { Access } from "../../../src/gateway/roles.js";
-import { mayCall } from "../../../src/gateway/allowlist.js";
+import type { Access } from "@multiagency/sdk";
+import { mayCall } from "@multiagency/sdk";
 
 /**
  * Who is looking, when the dashboard is hosted behind the gateway (src/gateway). Locally there is

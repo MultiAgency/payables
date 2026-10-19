@@ -19,6 +19,7 @@ import { RecoveryActivity } from "../features/activity/activity";
 import { AREA_NAV as NAV, areaPageTitle } from "./navigation";
 
 import { AgentContext } from "./agent-context";
+import { OWNER_TREASURY, PORTFOLIO, useProvides } from "./capabilities";
 import { SetupNextStep } from "./setup-progress";
 /** Detail and legacy routes remain accessible without adding duplicate menu entries. */
 const OFF_NAV: Record<Kind, LinkProps["to"][]> = { facilitator: ["/automations", "/follow/payment"], treasury: ["/follow/payment", "/steward"] };
@@ -98,9 +99,23 @@ function Identity({ setup, data }: { setup: Setup; data: Overview }) {
 }
 
 const isIndependentTask = (pathname: string) => ["/activity", "/follow/payment", "/follow/run", "/automations"].some(path => pathname.replace(/\/$/, "").endsWith(path));
+/** Routes that belong only to the Portfolio area; they mount only where the host provides it. */
+const PORTFOLIO_ROUTES = ["/automations", "/steward", "/follow/run"];
+const isPortfolioRoute = (pathname: string) => PORTFOLIO_ROUTES.some(path => pathname.replace(/\/$/, "").endsWith(path));
+
+function PortfolioUnavailable() {
+  return (
+    <div className="flex flex-col items-start gap-3 text-sm text-muted-foreground">
+      <p>Portfolio isn't available on this host. Its records are unchanged.</p>
+      <Link to="/" className="underline hover:text-foreground">Go to the area</Link>
+    </div>
+  );
+}
 
 function IndependentTask({ pathname }: { pathname: string }) {
+  const portfolio = useProvides(PORTFOLIO);
   if (pathname.endsWith("/follow/payment")) return <PaymentRecovery />;
+  if (isPortfolioRoute(pathname) && !portfolio) return <PortfolioUnavailable />;
   if (pathname.endsWith("/follow/run")) return <RunTimeline />;
   if (pathname.endsWith("/automations")) return <StopSchedule />;
   if (pathname.endsWith("/activity")) return <RecoveryActivity />;
@@ -114,6 +129,9 @@ function Notice({ children }: { children: ReactNode }) {
 /** The page asked for, when it belongs to this agent's area; otherwise where to go instead. */
 function Page({ data }: { data: Overview }) {
   const matchRoute = useMatchRoute();
+  const portfolio = useProvides(PORTFOLIO);
+  const pathname = useLocation({ select: location => location.pathname });
+  if (!portfolio && (kindOf(data) === "treasury" || isPortfolioRoute(pathname))) return <PortfolioUnavailable />;
   if ([...NAV[kindOf(data)].map(({ to }) => to), ...OFF_NAV[kindOf(data)]].some((to) => matchRoute({ to }))) return <Outlet />;
   return (
     <div className="flex flex-col items-start gap-3 text-sm text-muted-foreground">
@@ -153,7 +171,8 @@ export function AgentTaskBoundary() {
     ...queries.overview,
     enabled: ready,
   });
-  const treasury = useQuery({ ...queries.treasury, enabled: ready && (pathname.replace(/\/$/, "") === BASE || ["/funding", "/payees"].some(path => pathname.endsWith(path))) });
+  const ownerTreasury = useProvides(OWNER_TREASURY);
+  const treasury = useQuery({ ...queries.treasury, enabled: ready && ownerTreasury && (pathname.replace(/\/$/, "") === BASE || ["/funding", "/payees"].some(path => pathname.endsWith(path))) });
   const error = setup.error ?? overview.error ?? treasury.error;
   const name = overview.data && AREA_NAMES[kindOf(overview.data)];
   const pageTitle = pathname.replace(/\/$/, "").endsWith("/activity") ? "Operation status" : overview.data ? areaPageTitle(kindOf(overview.data), pathname) : "Agent";

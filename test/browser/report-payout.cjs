@@ -1,7 +1,9 @@
+const { workOrderProgress } = require('./fixtures/outputs.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { runTask } = require('./fixtures/task.cjs');
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { rpcValue, rpcAnswer } = require('./fixtures/rpc.cjs');
 const { assertResponsive } = require('./fixtures/layout.cjs');
 const agreement = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', version: 1, at: '2026-10-16T12:00:00Z', recordedBy: 'owner', approved: '0', remaining: '1000000000', terms: { payee: 'builder.near', title: 'October engineering', document: 'https://docs.google.com/document/d/example', signedOn: '2026-10-01', start: '2026-10-01', end: '2026-10-31', ceiling: '1000000000', openingApproved: '0', scope: 'Authorized issues' } };
 const report = { agreementId: agreement.id, start: '2026-10-01', end: '2026-10-16', contributions: 'Shipped the integration and acceptance tests.', assessment: 'Removed the manual handoff.', evidence: ['https://github.com/example/project/pull/42'] };
@@ -57,7 +59,7 @@ async function isolatedReview(browser, root) {
   await page.route('**/*', route => {
     const u = new URL(route.request().url()), p = u.pathname;
     if (u.hostname !== 'frontend.test') return route.abort();
-    if (p === '/gw/me') return route.fulfill({ json: { agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: 'https://invoice.test', viewer: { account: 'owner.near', access: { payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
+    if (p === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: 'https://invoice.test', viewer: { account: 'owner.near', access: { payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
     if (p.includes('/rpc/')) {
       const method = p.split('/rpc/')[1]; calls.push(method);
       const c = route.request().postDataJSON()?.json;
@@ -65,15 +67,15 @@ async function isolatedReview(browser, root) {
         assert.equal(c.approvedAmount, '250000000'); assert.ok(c.feedback); assert.equal(r.report.amount, undefined);
         r.approvedAmount = c.approvedAmount; r.feedback = c.feedback; r.state = 'approved'; r.version++;
         view.agreements[0].approved = c.approvedAmount; view.agreements[0].remaining = '750000000';
-        return route.fulfill({ json: { json: view } });
+        return route.fulfill({ json: rpcAnswer(method, view) });
       }
       if (method === 'compensation/prepare') {
         assert.equal(c.command.mode, 'isolated'); assert.equal(c.command.id, r.id); preparations++;
         if (!r.payment) { r.payment = { mode: 'isolated', id: r.id, until: c.command.until }; r.version++; return route.fulfill({ status: 503, json: { message: 'Preparation interrupted. Refresh this request.', code: 'SERVICE_UNAVAILABLE' } }); }
         assert.equal(c.command.until, r.payment.until);
         order = { version: 1, id: r.id, parentAgentId: 'fixture', payee: r.payee, amount: r.approvedAmount, asset: 'usdc', note: 'Accepted October report', until: r.payment.until, createdAt: r.at, owner: { type: 'near', account_id: 'owner.near', public_key: 'fixture' } };
-        snapshot = { order, agentId: null, wallet: null, balance: null, policyReady: false, grant: null, invoice: null, ownerActions: [], approval: null, error: null };
-        return route.fulfill({ json: { json: view } });
+        snapshot = { order, agentId: null, wallet: null, balance: null, policyReady: false, grant: null, invoice: null, ownerActions: [], approval: null, error: null, executor: true };
+        return route.fulfill({ json: rpcAnswer(method, view) });
       }
       if (method === 'workOrders/file') {
         assert.deepEqual(c, { id: r.id });
@@ -81,11 +83,11 @@ async function isolatedReview(browser, root) {
         return route.fulfill({ status: 503, json: { message: 'Submission response lost. Follow this payout.', code: 'SERVICE_UNAVAILABLE' } });
       }
       const values = {
-        instance: { agentId: 'fixture', executor: true }, setup: { agentId: 'fixture', executor: true, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: null, dao: null },
-        overview: { agentId: 'fixture', digest: 'sha256:' + 'a'.repeat(64), notInForce: null, agreed: [], unmanaged: [], target: { usdc: 1 }, book: [], policy: { policy: { actions: ['transfer'], frozen: false, assets: 'any', owner_approval: true, destinations: { mode: 'only', list: [] } }, revision: 1, usage: { budget: {} }, cooldowns: {} } },
-        'treasury/get': null, 'inbox/list': [], 'workOrders/list': order ? [order] : [], 'workOrders/get': snapshot, 'agreements/list': [], 'owner/actions': [], 'owner/pending': [], held: [], unresolved: [], invoices: [], activity: [], paymentHistory: { items: [], complete: true }, 'compensation/list': view,
+        instance: { agentId: 'fixture', executor: true }, setup: { agentId: 'fixture', executor: true, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: null, dao: null },
+        overview: { agentId: 'fixture', digest: 'sha256:' + 'a'.repeat(64), notInForce: null, agreed: [], unmanaged: [], target: { usdc: 1 }, book: [], policy: { policy: { actions: ['transfer'], frozen: false, assets: 'any', owner_approval: true, destinations: { mode: 'only', list: [] }, confidential: true, limits: {}, max_actions_per_hour: null, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0 }, revision: 1, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', status: 'APPLIED', provider_policy_synced: true }, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [] },
+        'treasury/get': null, 'inbox/list': [], 'workOrders/list': order ? [order] : [], 'workOrders/get': snapshot && { ...snapshot, progress: workOrderProgress(snapshot) }, 'agreements/list': [], 'owner/actions': [], 'owner/pending': [], held: [], unresolved: [], invoices: [], activity: [], paymentHistory: { items: [], complete: true }, 'compensation/list': view,
       };
-      return route.fulfill({ json: { json: rpcValue(values, method) } });
+      return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
     }
     if (p.startsWith('/static/')) return route.fulfill({ path: path.join(root, p), contentType: p.endsWith('.js') ? 'application/javascript' : p.endsWith('.css') ? 'text/css' : 'font/woff2' });
     return route.fulfill({ path: path.join(root, 'index.html'), contentType: 'text/html' });
@@ -99,10 +101,13 @@ async function isolatedReview(browser, root) {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Approve compensation', exact: true }).click();
   await page.getByText(/Compensation is approved and counted/).waitFor();
   assert.ok(!calls.includes('workOrders/file'));
+  // The isolated order is the default payout path.
+  await page.getByText('Isolated order (default)', { exact: true }).waitFor();
   await page.getByLabel('Isolated order payment deadline (UTC)').fill('2026-11-15T12:00');
-  await page.getByRole('button', { name: 'Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'Prepare isolated order', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Prepare payout', exact: true }).click();
-  await page.getByText(/Preparation interrupted/).waitFor();
+  // A lost preparation answer is an unknown outcome: the retained request is read again, never re-sent.
+  await page.getByText(/The outcome is unknown: this compensation\/prepare request may have taken effect/).waitFor();
   await page.getByRole('button', { name: 'Refresh requests', exact: true }).click();
   await page.getByRole('button', { name: 'Resume preparation', exact: true }).click();
   await page.getByText('Next: authorize the dedicated agent.').waitFor();
@@ -123,14 +128,14 @@ async function isolatedReview(browser, root) {
   assert.equal(calls.filter(c => c === 'workOrders/file').length, 0);
   await page.getByRole('button', { name: 'Submit payout', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit payout', exact: true }).click();
-  await page.getByText(/Submission response lost/).waitFor();
+  await page.getByText(/The outcome is unknown: this workOrders\/file request may have taken effect/).waitFor();
   await page.getByRole('button', { name: 'Refresh work order', exact: true }).click();
   await page.getByText(/Follow this retained payment before any further action/).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Submit payout', exact: true }).count(), 0);
   snapshot.invoice.status = 'paid'; snapshot.balance = '0';
   await page.getByRole('button', { name: 'Refresh work order', exact: true }).click();
   await page.getByText('Recorded payment: paid').waitFor();
-  assert.equal(await page.getByText('Submission response lost. Follow this payout.', { exact: true }).count(), 0);
+  assert.equal(await page.getByText(/The outcome is unknown: this workOrders\/file request/).count(), 0);
   assert.equal(view.agreements[0].remaining, '750000000'); assert.equal(preparations, 2);
   assert.equal(calls.filter(c => c === 'workOrders/file').length, 1);
   await assertResponsive(page, 'integrated isolated payout');

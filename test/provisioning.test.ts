@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, readFileSync, unlinkSync } from "node:fs";
+import { mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ProvisioningStore, provisioningEnv, checkProvisionedCreation } from "../src/gateway/provisioning.js";
@@ -46,7 +46,10 @@ test("creation is bound to the reserved owner, signer and Payables role", () => 
 });
 
 test("a fresh self-service host needs no preconfigured agent; scoped intake uses its own paths", () => {
-  const config = loadConfig(new URL("../deploy/payables.json", import.meta.url).pathname);
+  // Self-service is a local and test capability; no deploy config here enables it on a production host.
+  const file = join(mkdtempSync(join(tmpdir(), "self-service-")), "payables.json");
+  writeFileSync(file, JSON.stringify({ host: "localhost", selfService: { maxAgents: 10, firstPort: 9000 }, agents: [] }));
+  const config = loadConfig(file);
   assert.deepEqual(config.agents, []);
   assert.equal(config.selfService?.maxAgents, 10);
   const scope = "/requests/pay-" + "a".repeat(24);

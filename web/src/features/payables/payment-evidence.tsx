@@ -1,8 +1,8 @@
-import type { paymentEvidence } from "../../../../src/provider-display.js";
+import type { OwnerOutput } from "@multiagency/sdk";
 import { CopyButton } from "../../shared/ui";
 
 /** Read-only provider observations, deliberately separate from owner approval and payment status. */
-export function PaymentEvidence({ evidence, loading = false, readFailed = false }: { evidence?: ReturnType<typeof paymentEvidence>; loading?: boolean; readFailed?: boolean }) {
+export function PaymentEvidence({ evidence, loading = false, readFailed = false }: { evidence?: OwnerOutput<"paymentStatus">["evidence"]; loading?: boolean; readFailed?: boolean }) {
   const rows = [
     ["Transaction hash", evidence?.txHash], ["Destination transaction hash", evidence?.destinationTxHash],
     ["Refund transaction hash", evidence?.refundTxHash], ["Refund recipient", evidence?.refundTo],

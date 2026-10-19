@@ -14,7 +14,7 @@ import { useNameOf } from "../../shared/names";
 import { useCanCall } from "../../app/viewer";
 import { Field, focusInvalid } from "../../shared/form";
 import { payeeError, deadlineError } from "../../shared/form-validation";
-import { intentsAccount, isNearcomAddress } from "../../../../src/intents-account.js";
+import { intentsAccount, isNearcomAddress } from "@multiagency/sdk";
 import { useDirtyDraft } from "../../shared/dirty-draft";
 import { InvoicePageLink } from "./invoice-link";
 import { WorkOrders } from "./work-orders";
@@ -252,7 +252,7 @@ function Agreements({ listed, payees, destinations, policySetup }: {
   const { setup, data } = useAgent();
   const pending = useQuery({ ...queries.ownerPending, refetchInterval: 5_000 });
   const policyWaiting = pending.data?.some((p) => p.type === "policy_update" && p.state === "waiting");
-  const decline = useAttempt([["agreements"]]);
+  const decline = useAttempt([queries.orpc.agreements.key()]);
   const agreeing = useAttempt();
   // Each request's own deadline, until someone changes it: thirty days out.
   const [untilOf, setUntilOf] = useState<Record<string, string>>({});

@@ -1,12 +1,10 @@
-import type { RouterClient } from "@orpc/server";
-import type { Router } from "../../../../src/router.js";
-import type { Decoded } from "../../../../src/gateway/proposals.js";
+import type { OwnerOutput } from "@multiagency/sdk";
+import type { Decoded } from "@multiagency/sdk";
 
 // The same API type as shared/query-source, without importing browser client modules into pure tests.
-type QuerySource = RouterClient<Router>;
-type Operation = Awaited<ReturnType<QuerySource["activity"]>>[number];
-type OwnerAction = Awaited<ReturnType<QuerySource["owner"]["actions"]>>[number];
-type Run = Awaited<ReturnType<QuerySource["autopilot"]["evidence"]>>["ticks"][number];
+type Operation = OwnerOutput<"activity">[number];
+type OwnerAction = OwnerOutput<"owner/actions">[number];
+type Run = OwnerOutput<"autopilot/evidence">["ticks"][number];
 
 export type HistoryType = "money" | "owner" | "run" | "test" | "proposal";
 export type HistoryFilters = { search: string; type: HistoryType | ""; status: string; from: string; to: string };
@@ -15,11 +13,10 @@ export type HistoryRecord = { type: HistoryType; status: string; at?: string; se
 
 const searchable = (...values: unknown[]) => values.filter(value => typeof value === "string" || typeof value === "number").join(" ");
 const words = (value: string) => value.replaceAll("_", " ").replaceAll("-", " ");
-const probeKinds = new Set(["refusal", "verify-refusal", "probe"]);
 
 /** Display classification only; the separate unresolved query determines dispatch blockers. */
 export function describeOperation(op: Operation): HistoryRecord {
-  const type = probeKinds.has(op.kind) ? "test" : "money";
+  const type = op.kind === "refusal" ? "test" : "money";
   return {
     type, status: `${type}:${op.refused !== undefined ? "refused" : op.status || "unknown"}`, at: op.at,
     search: searchable(op.kind, words(op.kind), op.correlationId, op.status, op.refused,

@@ -1,4 +1,4 @@
-import { supplierUrl } from "../../app/gateway-contract";
+import { payeeHostUrl } from "../../app/gateway-contract";
 import { BASE } from "../../shared/client";
 import { gatewayQueries } from "../../app/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { CopyButton, QueryError } from "../../shared/ui";
 export function InvoicePageLink({ next = false }: { next?: boolean }) {
   const gateway = useQuery(gatewayQueries.session);
   if (gateway.error) return <QueryError error={gateway.error} retry={() => gateway.refetch()} />;
-  const invoices = supplierUrl(gateway.data, BASE);
+  const invoices = payeeHostUrl(gateway.data, BASE);
   if (!invoices) return <p className="text-sm text-muted-foreground">This agent's invoice page address is not configured here.</p>;
   return <div className="flex flex-wrap items-center gap-2 text-sm">
     {next && <p className="w-full">Next: share the invoice page with the agreed payee.</p>}

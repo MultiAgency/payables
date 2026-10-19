@@ -13,13 +13,16 @@ import { RunTimeline } from "../features/portfolio/timeline-run";
 import { LiveDemo } from "../features/demo/live-demo";
 
 const root = createRootRoute({ component: Shell });
+/** A record id carried in a deep link (`?request=`, `?order=`): a UUID or nothing. */
+const recordId = (value: unknown) => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ? value : undefined;
 const page = <P extends string>(path: P, component: () => React.ReactNode) =>
   createRoute({ getParentRoute: () => root, path, component });
 
 export const router = createRouter({
   basepath: BASE || "/",
   routeTree: root.addChildren([
-    page("/", Overview),
+    // Deep link: `/?request=<id>` opens that compensation request in the review.
+    createRoute({ getParentRoute: () => root, path: "/", component: Overview, validateSearch: (search: Record<string, unknown>): { request?: string } => ({ request: recordId(search.request) }) }),
     page("/steward", Steward),
     page("/automations", Automations),
     page("/demo", LiveDemo),
@@ -27,7 +30,8 @@ export const router = createRouter({
     page("/funding", Funding),
     // The page's first address: old links land on its new one.
     createRoute({ getParentRoute: () => root, path: "/treasury", beforeLoad: () => { throw redirect({ to: "/funding" }); } }),
-    page("/payees", () => <PayeesSection />),
+    // Deep link: `/payees?order=<id>` opens that work order.
+    createRoute({ getParentRoute: () => root, path: "/payees", component: () => <PayeesSection />, validateSearch: (search: Record<string, unknown>): { order?: string } => ({ order: recordId(search.order) }) }),
     page("/policy", Policy),
     // One payment or one autopilot run, step by step; reached from the Overview, not the menu.
     createRoute({ getParentRoute: () => root, path: "/follow/payment", component: PaymentTimeline, validateSearch: (search: Record<string, unknown>): { payment?: string; invoice?: string } => ({

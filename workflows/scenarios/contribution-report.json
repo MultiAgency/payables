@@ -1,0 +1,51 @@
+{
+  "story": "A builder's period agreement: assignments reported during the period, each reviewed, paid and settled up to the earnings cap",
+  "payeeLabel": "Alex (builder)",
+  "payee": "payee.near",
+  "agreement": {
+    "title": "October design support",
+    "document": "https://example.org/agreements/october-design",
+    "signedOn": "2026-10-01",
+    "start": "2026-10-01",
+    "end": "2026-10-31",
+    "ceilingUsdc": "40",
+    "scope": "Design reviews and delivery assets"
+  },
+  "deadlineDays": 7,
+  "reports": [
+    {
+      "label": "early assignment: onboarding review and icon set",
+      "start": "2026-10-01",
+      "end": "2026-10-15",
+      "contributions": "Reviewed onboarding screens and delivered the icon set.",
+      "assessment": "Delivered on schedule; two review rounds.",
+      "evidence": ["https://example.org/deliverables/icons"],
+      "reviews": [
+        { "approvedUsdc": "25", "feedback": "Accepted: icon set and reviews." }
+      ],
+      "remainingUsdc": "15"
+    },
+    {
+      "label": "later assignment: launch banner set",
+      "start": "2026-10-16",
+      "end": "2026-10-31",
+      "contributions": "Designed the launch banner set in three sizes.",
+      "assessment": "One revision after review.",
+      "evidence": ["https://example.org/deliverables/banners"],
+      "reviews": [
+        { "approvedUsdc": "20", "feedback": "Accepted: banner set.", "expect": "ceiling_exceeded" },
+        { "approvedUsdc": "15", "feedback": "Accepted at the remaining cap: banner set." }
+      ],
+      "remainingUsdc": "0"
+    },
+    {
+      "label": "work after the period: November newsletter art",
+      "start": "2026-11-01",
+      "end": "2026-11-07",
+      "contributions": "Drew the November newsletter header.",
+      "assessment": "Outside the agreed period.",
+      "evidence": ["https://example.org/deliverables/newsletter"],
+      "expect": "outside_period"
+    }
+  ]
+}

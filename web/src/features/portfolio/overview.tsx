@@ -17,7 +17,7 @@ import { useCanCall } from "../../app/viewer";
 import { useAgent } from "../../app/agent-context";
 import { Details, ErrorBox, Loading, QueryError, Section } from "../../shared/ui";
 import { useValuedBook } from "../../shared/valuation";
-import { priceState } from "../../../../src/valuation.js";
+import { priceState } from "../../shared/prices";
 
 function Figure({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
@@ -160,7 +160,7 @@ function Attention() {
   const unavailable = required.find((q) => q.error);
   const loading = required.some((q) => q.isPending);
   const checked = Math.min(...required.map((q) => q.dataUpdatedAt));
-  const dismissing = useAttempt([["inbox"]]);
+  const dismissing = useAttempt([queries.orpc.inbox.key()]);
   const items = useAttention(dismissing);
 
   if (kindOf(data) === "facilitator" && !items.length && !loading && !unavailable && !dismissing.error) {

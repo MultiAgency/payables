@@ -211,14 +211,14 @@ test("an approve-only agent server starts with EXECUTOR=off; gateway secrets nev
   assert.equal(approver.SESSION_SECRET, undefined);
 });
 
-test("the deployed configuration: both agents owned by the DAO, the treasury agent executed here, the payout agent approve-only", () => {
+test("the bundled dashboard configuration is a local example: both agents approve-only", () => {
   const config = loadConfig("deploy/dashboard.json");
-  assert.equal(config.host, "proto.multiagency.ai");
+  assert.equal(config.host, "localhost");
   assert.deepEqual(
     config.agents.map((a) => [a.name, a.owner, a.envFile, a.executor]),
     [
-      ["treasury", "agentic.sputnik-dao.near", ".env.dao", true],
-      ["payout", "agentic.sputnik-dao.near", ".env.payout", false],
+      ["treasury", "example.sputnik-dao.near", ".env.dao", false],
+      ["payout", "example.sputnik-dao.near", ".env.payout", false],
     ],
   );
 });

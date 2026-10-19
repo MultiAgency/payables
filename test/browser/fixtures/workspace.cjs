@@ -1,21 +1,22 @@
+const { HOST_CAPABILITIES } = require('./host.cjs');
 const assert = require('node:assert/strict');
 const { join } = require('node:path');
-const { rpcValue } = require('./rpc.cjs');
+const { rpcValue, rpcAnswer } = require('./rpc.cjs');
 const { makeTick, recordingFor } = require('./run.cjs');
 
 /** Fresh presentation evidence; each suite still declares its own allowed RPCs and overrides. */
 function workspaceEvidence({ policyDetails = false, grants = false } = {}) {
   const budget = Object.fromEntries(['daily', 'weekly', 'monthly'].map(period => [period,
-    { limit_usd: '100', remaining_usd: '90', spent_usd: '10' },
+    { resets_at: null, limit_usd: '100', remaining_usd: '90', spent_usd: '10' },
   ]));
-  const setup = { agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' },
-    grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z' }, dao: null };
-  const overview = kind => ({ agentId: 'fixture', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [], ...(grants && { grants: [] }),
+  const setup = { agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' },
+    grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z', id: 'grant-fixture' }, dao: null, executor: true };
+  const overview = kind => ({ grants: [], agentId: 'fixture', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [], ...(grants && { grants: [] }),
     rebalance: { minLegUsd: 1, maxCostBps: 100 }, target: { usdc: 1 },
-    book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: '0', confidential: '10000000', usd: 10, price: 1 }],
-    policy: { policy: { actions: kind === 'treasury' ? ['swap', 'transfer'] : ['transfer'], frozen: false,
-      destinations: { mode: 'only', list: [] }, assets: 'any', ...(policyDetails && { budget: {}, limits: {} }) },
-      ...(policyDetails && { revision: 1 }), usage: { budget }, cooldowns: {} },
+    book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: 0n, confidential: 10000000n, usd: 10, price: 1, priceUpdatedAt: null, priceExpiresAt: null }],
+    policy: { wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true, policy: { confidential: true, owner_approval: true, limits: {}, max_actions_per_hour: null, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0, actions: kind === 'treasury' ? ['swap', 'transfer'] : ['transfer'], frozen: false,
+      destinations: { mode: 'only', list: [] }, assets: 'any', ...(policyDetails && { budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, limits: {} }) },
+      ...(policyDetails && { revision: 1 }), usage: { budget, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null} },
   });
   return { budget, setup, overview };
 }
@@ -43,7 +44,7 @@ function workspaceOpener(root, { budget, values, proposals = false }) {
       if (hostname !== 'frontend.test') return route.abort();
       if (pathname === '/gw/me') {
         if (++gatewayReads > 1 && options.invoiceLinkError) return route.fulfill({ status: 503, json: { error: 'Invoice link unavailable' } });
-        return route.fulfill({ json: {
+        return route.fulfill({ json: { capabilities: options.capabilities ?? HOST_CAPABILITIES,
           agents: state.agents.map(name => ({ name, owner: 'owner.near', dao: Boolean(options.dao) })),
           invoices: options.noInvoiceLink ? null : 'https://invoices.example', viewer: options.public ? null : { account: 'owner.near',
             access: Object.fromEntries(state.agents.map(name => [name, { canSign: !options.dao && !(options.member && name === 'payables'), canPropose: !(options.member && name === 'payables'), canVote: !(options.member && name === 'payables'), canExecute: !(options.member && name === 'payables'), canManage: !(options.member && name === 'payables') }])) },
@@ -64,7 +65,7 @@ function workspaceOpener(root, { budget, values, proposals = false }) {
         if (method === 'autopilot/log') {
           assert.equal(route.request().postDataJSON().json.tickId, run.id, 'recording read must select the displayed run');
           assert.ok(!options.approveOnly, 'approve-only views must not read recordings');
-          return route.fulfill({ json: { json: recordingFor(run) } });
+          return route.fulfill({ json: rpcAnswer(method, recordingFor(run)) });
         }
         const kind = pathname.includes('/payables/') ? 'payables' : 'treasury';
         const declared = values(kind, options, state, run);
@@ -72,7 +73,7 @@ function workspaceOpener(root, { budget, values, proposals = false }) {
           const input = route.request().postData() || new URL(route.request().url()).search;
           declared[method] = { ticks: input.includes('since') ? [] : [run], corrupt: [] };
         }
-        return route.fulfill({ json: { json: rpcValue(declared, method) } });
+        return route.fulfill({ json: rpcAnswer(method, rpcValue(declared, method)) });
       }
       if (pathname.startsWith('/static/')) return route.fulfill({ path: join(root, pathname),
         contentType: pathname.endsWith('.js') ? 'application/javascript' : pathname.endsWith('.css') ? 'text/css' : 'font/woff2' });

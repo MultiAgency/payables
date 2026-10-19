@@ -232,6 +232,14 @@ resuming schedules are separate owner decisions. `pnpm test:live` requires separ
 
 ## Dashboard
 
+> **Retired, 2026-10-18 (backend retirement phase 0).** This repository no longer deploys to any
+> production host. `deploy/dashboard.json`, `deploy/invoices.json` and `deploy/payables.json` are local
+> examples on `localhost` with every agent `"executor": false` and no self-service provisioning. Every
+> image default therefore starts no executor. Proto runs the production executors.
+> `test/deploy-safety.test.ts` fails if any deploy config, image default or `railway.json` target
+> names a `*.multiagency.ai` host with an executing or self-provisioned agent. The Railway steps in
+> this file are a historical record of earlier deployments, not instructions.
+
 **Deploy the dashboard on Railway** (service `dao`: `Dockerfile.dashboard`, one replica, a volume at
 `/data`). One container runs the public gateway (`src/gateway/server.ts`) and, on loopback beside it,
 each agent server listed in `deploy/dashboard.json`. An agent with `"executor": false` runs approve-only.

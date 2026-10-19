@@ -1,8 +1,11 @@
+const { strategyStatus } = require('./fixtures/outputs.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** Offline task journeys. Run through test/browser/run.cjs to retain failure diagnostics. */
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
+const { assertHidden } = require('./fixtures/hidden.cjs');
 const path = require('node:path');
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 const { makeTick, recordingFor } = require('./fixtures/run.cjs');
 const { openWorkspaceNavigation } = require('./fixtures/navigation.cjs');
 const { openOwnerStatus } = require('./fixtures/owner-status.cjs');
@@ -12,9 +15,9 @@ const { assertResponsive } = require('./fixtures/layout.cjs');
 async function paymentQueue(browser, root) {
   const request = recipient => ({ recipient, amount: '1000000', asset: 'usdc', confidential: true });
   const at = '2026-10-14T12:00:00Z';
-  const invoice = { id: 'a'.repeat(32), payee: 'changed.near', amount: '1000000', at, reservation: '0', revision: 2, review: true,
-    revisions: [{ revision: 1, amount: '1000000' }, { revision: 2, amount: '2000000', review: 1 }],
-    operation: { idempotencyKey: 'invoice:local-key', correlationId: 'changed-payment', at, status: 'SUCCESS', submissionState: 'OBSERVED', request: request('changed.near') } };
+  const invoice = { submission: 'fixture-submission', note: '', id: 'a'.repeat(32), payee: 'changed.near', amount: '1000000', at, reservation: '0', revision: 2, review: true,
+    revisions: [{ note: '', review: 0, revision: 1, amount: '1000000' }, { note: '', revision: 2, amount: '2000000', review: 1 }],
+    operation: { idempotencyKey: 'invoice:local-key', correlationId: 'changed-payment', at, status: 'SUCCESS', submissionState: 'OBSERVED', request: request('changed.near'), approvalId: 'approval-fixture', kind: 'pay' } };
   {
     const width = 390;
     const context = await browser.newContext({ viewport: { width, height: 900 } });
@@ -26,25 +29,25 @@ async function paymentQueue(browser, root) {
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
       if (url.hostname !== 'frontend.test') return route.abort();
-      if (url.pathname === '/gw/me') return route.fulfill({ json: { agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: null,
+      if (url.pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, agents: [{ name: 'payables', owner: 'owner.near', dao: false }], invoices: null,
         viewer: { account: 'owner.near', access: { payables: { canSign: true, canPropose: true, canVote: true, canExecute: true, canManage: true } } } } });
       if (url.pathname.includes('/rpc/')) {
         const method = url.pathname.split('/rpc/')[1]; calls.push(method);
         if (state.failed && method === 'invoices') return route.fulfill({ status: 503, json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Invoice fixture unavailable' } } });
         const values = {
           instance: { agentId: 'queue-fixture', executor: true },
-          setup: { agentId: 'queue-fixture', executor: true, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' }, grant: { label: 'payout', expiresAt: '2030-01-01T00:00:00Z' }, dao: null },
+          setup: { agentId: 'queue-fixture', executor: true, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' }, grant: { label: 'payout', expiresAt: '2030-01-01T00:00:00Z', id: 'grant-fixture' }, dao: null },
           overview: { agentId: 'queue-fixture', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [], target: { usdc: 1 },
-            book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: '0', confidential: '10000000', usd: 10, price: 1 }],
-            policy: { policy: { actions: ['transfer'], frozen: false, assets: 'any', owner_approval: true, destinations: { mode: 'only', list: [] } }, usage: { budget: {} }, cooldowns: {} } },
+            book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: 0n, confidential: 10000000n, usd: 10, price: 1, priceUpdatedAt: null, priceExpiresAt: null }],
+            policy: { policy: { actions: ['transfer'], frozen: false, assets: 'any', owner_approval: true, destinations: { mode: 'only', list: [] }, confidential: true, limits: {}, max_actions_per_hour: null, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0 }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true }, rebalance: { minLegUsd: 1, maxCostBps: 100 }, grants: [] },
           'treasury/get': null, 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/actions': [],
-          'owner/pending': state.empty ? [] : ['done', 'expired'].map(state => ({ state, expiresAt: '2030-01-01T00:00:00Z', payment: { correlationId: 'settled-payment', verdict: 'approve' } })),
-          held: state.empty ? [] : [{ correlationId: 'older-held', approvalId: 'approval-old', at: '2026-10-01T00:00:00Z', request: request('older.near') }],
+          'owner/pending': state.empty ? [] : ['done', 'expired'].map(state => ({ correlationId: `owner-${state}`, type: 'approval_vote', hash: 'fixture-hash', intent: { standard: 'nep413', payload: { message: '{}', recipient: 'fixture', nonce: 'fixture' } }, delegate: null, state, expiresAt: '2030-01-01T00:00:00Z', payment: { correlationId: 'settled-payment', verdict: 'approve' } })),
+          held: state.empty ? [] : [{ correlationId: 'older-held', approvalId: 'approval-old', at: '2026-10-01T00:00:00Z', request: request('older.near'), kind: 'pay' }],
           unresolved: [], invoices: state.empty ? [] : [invoice],
-          activity: state.empty ? [] : [{ correlationId: 'settled-payment', idempotencyKey: 'settled-key', at, status: 'SUCCESS', request: request('settled.near') }],
+          activity: state.empty ? [] : [{ correlationId: 'settled-payment', idempotencyKey: 'settled-key', at, status: 'SUCCESS', request: request('settled.near'), approvalId: 'approval-fixture', kind: 'pay' }],
           paymentHistory: { items: state.empty ? [] : [{ correlationId: 'settled-payment', at }, { correlationId: 'unknown-payment', at }], complete: !state.failed },
         };
-        return route.fulfill({ json: { json: rpcValue(values, method) } });
+        return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
       }
       if (url.pathname.startsWith('/static/')) return route.fulfill({ path: root + url.pathname,
         contentType: url.pathname.endsWith('.js') ? 'application/javascript' : url.pathname.endsWith('.css') ? 'text/css' : 'font/woff2' });
@@ -87,14 +90,14 @@ async function paymentQueue(browser, root) {
     await page.getByRole('button', { name: 'Clear search', exact: true }).click();
     assert.equal(await search.inputValue(), '');
     assert.equal(await queue.locator('li').count(), 4);
-    assert.equal(await page.getByLabel('Recipient’s NEAR account', { exact: true }).isVisible(), false);
+    await assertHidden(page.getByLabel('Recipient’s NEAR account', { exact: true }));
     const create = page.getByText('Create payment', { exact: true });
     const recipient = page.getByLabel('Recipient’s NEAR account', { exact: true });
     await create.focus();
     await page.keyboard.press('Enter');
     await recipient.fill('draft.near');
     await create.click();
-    assert.equal(await recipient.isVisible(), false);
+    await assertHidden(recipient);
     await create.click();
     assert.equal(await recipient.inputValue(), 'draft.near', 'collapsing creation preserves the draft');
     await assertResponsive(page, "payment-queue");
@@ -125,15 +128,15 @@ async function paymentQueue(browser, root) {
 
 async function paymentDetail(browser, root) {
   const budget = Object.fromEntries(['daily', 'weekly', 'monthly'].map(period => [period,
-    { limit_usd: '100', remaining_usd: '90', spent_usd: '10' },
+    { resets_at: null, limit_usd: '100', remaining_usd: '90', spent_usd: '10' },
   ]));
-  const setup = { agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' },
-    grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z' }, dao: null };
+  const setup = { agentId: 'fixture', wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' },
+    grant: { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z', id: 'grant-fixture' }, dao: null, executor: true };
   const overview = kind => ({ agentId: 'fixture', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [],
     rebalance: { minLegUsd: 1, maxCostBps: 100 }, target: { usdc: 1 },
-    book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: '0', confidential: '10000000', usd: 10, price: 1 }],
+    book: [{ asset: 'usdc', symbol: 'USDC', decimals: 6, public: 0n, confidential: 10000000n, usd: 10, price: 1, priceUpdatedAt: null, priceExpiresAt: null }],
     policy: { policy: { actions: kind === 'treasury' ? ['swap', 'transfer'] : ['transfer'], frozen: false,
-      destinations: { mode: 'only', list: [] }, assets: 'any' }, usage: { budget }, cooldowns: {} },
+      destinations: { mode: 'only', list: [] }, assets: 'any', confidential: true, owner_approval: true, limits: {}, max_actions_per_hour: null, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0 }, usage: { budget, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true }, grants: []
   });
   const invoiceRecord = ({ letter = 'a', correlationId, submissionState = 'PREPARED', review = false, refused } = {}) => ({
     id: letter.repeat(32), payee: 'invoice-payee.near', submission: 'fixture-submission', at: '2026-10-14T12:00:00Z',
@@ -142,7 +145,7 @@ async function paymentDetail(browser, root) {
       ...(review ? [{ revision: 2, amount: '2000000', note: 'Revised terms need review', review: 1 }] : [])],
     operation: { idempotencyKey: `invoices:local-key-${letter}`, at: '2026-10-14T12:00:00Z', kind: 'invoices', submissionState,
       status: submissionState === 'PREPARED' ? 'PREPARED' : refused ? 'UNKNOWN' : 'PROCESSING', correlationId, refused,
-      request: { amount: '1000000', asset: 'usdc', recipient: 'invoice-payee.near', confidential: true } },
+      request: { amount: '1000000', asset: 'usdc', recipient: 'invoice-payee.near', confidential: true }, approvalId: 'approval-fixture' },
   });
   async function open(context, routePath, options = {}) {
     const page = await context.newPage();
@@ -167,7 +170,7 @@ async function paymentDetail(browser, root) {
       const pathname = url.pathname;
       if (pathname === '/gw/me') {
         if (++gatewayReads > 1 && options.invoiceLinkError) return route.fulfill({ status: 503, json: { error: 'Invoice link unavailable' } });
-        return route.fulfill({ json: {
+        return route.fulfill({ json: { capabilities: HOST_CAPABILITIES,
         agents: (options.onlyPayables ? ['payables'] : ['treasury', 'payables']).map(name => ({ name, owner: 'owner.near', dao: false })),
         invoices: options.noInvoiceLink ? null : 'https://invoices.example', viewer: options.public ? null : { account: 'owner.near',
           access: Object.fromEntries((options.onlyPayables ? ['payables'] : ['treasury', 'payables']).map(name => [name, { canSign: !(options.member && name === 'payables'), canPropose: !(options.member && name === 'payables'), canVote: !(options.member && name === 'payables'), canExecute: !(options.member && name === 'payables'), canManage: !(options.member && name === 'payables') }])) },
@@ -184,10 +187,10 @@ async function paymentDetail(browser, root) {
           return route.fulfill({ status: state.errorStatus, json: { json: { defined: false, code: state.errorStatus === 403 ? 'FORBIDDEN' : 'INTERNAL_SERVER_ERROR', message: 'Fixture read unavailable' } } });
         }
         const kind = pathname.includes('/payables/') ? 'payables' : 'treasury';
-        const values = { get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' && !state.settled ? ['payment-one','payment-two'].map(correlationId => ({ correlationId, approvalId: 'approval-' + correlationId, at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near', confidential: true } })) : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved' }] : [],
-          'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'settled', ownerSucceeded: true, payment: { correlationId: 'payment-one', verdict: 'approve' } }], paymentHistory: { items: options.held ? ['payment-one','payment-two'].map(correlationId => ({ correlationId, at: '2026-10-14T00:00:00Z' })) : [], complete: true }, paymentStatus: { status: state.settled ? 'SUCCESS' : 'PROCESSING', request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near', confidential: true }, approvalId: 'approval-one', expiresAt: '2030-01-01T00:00:00Z' },
-          'autopilot/get': { on: true, everyMin: 60, maxUsd: 10 },
-          'autopilot/evidence': { ticks: [run] } };
+        const values = { get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup: { ...setup, ...(options.noGrant && { grant: null }), ...(options.approveOnly && { executor: false }) }, overview: overview(kind), 'treasury/get': null, held: options.held && kind === 'payables' && !state.settled ? ['payment-one','payment-two'].map(correlationId => ({ correlationId, approvalId: 'approval-' + correlationId, at: new Date().toISOString(), request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near', confidential: true }, kind: 'pay' })) : [], unresolved: options.unresolved && kind === 'payables' ? [{ at: new Date().toISOString(), key: 'fixture-unresolved', kind: 'pay', request: {}, status: null, sent: true }] : [],
+          'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': options.agreed ? [{ note: '', id: 'agreement-fixture', payee: 'payee.near', amount: '1000000', status: 'agreed', origin: 'owner', at: '2026-10-01T00:00:00Z' }] : [], activity: [], invoices: [], reconcileBooks: [], 'owner/pending': [], 'owner/actions': [{ correlationId: 'owner-fixture', type: 'approval_vote', stage: 'settled', ownerSucceeded: true, payment: { correlationId: 'payment-one', verdict: 'approve' }, expiresAt: '2030-01-01T00:00:00Z', failureCode: null, signer: 'wallet', status: null }], paymentHistory: { items: options.held ? ['payment-one','payment-two'].map(correlationId => ({ correlationId, at: '2026-10-14T00:00:00Z' })) : [], complete: true }, paymentStatus: { status: state.settled ? 'SUCCESS' : 'PROCESSING', request: { amount: '1000000', asset: 'usdc', recipient: 'payee.near', confidential: true }, approvalId: 'approval-one', expiresAt: '2030-01-01T00:00:00Z', failureCode: null, createdAt: null, updatedAt: null, detailError: null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null } },
+          'autopilot/get': { on: true, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+          'autopilot/evidence': { ticks: [run], corrupt: [] } };
         values.invoices = state.invoices;
         if (options.noOwnerActions) values['owner/actions'] = [];
         if (method === 'cancelPreparedInvoice') {
@@ -198,23 +201,23 @@ async function paymentDetail(browser, root) {
           invoice.operation.submissionState = 'RESOLVED';
           invoice.operation.refused = 'invoice_cancelled_before_submission';
           invoice.reservation = '0';
-          return route.fulfill({ json: { json: invoice } });
+          return route.fulfill({ json: rpcAnswer(method, invoice) });
         }
         if (options.unmanaged) {
-          values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: '1000000', decimals: 6, usd: null }];
+          values.overview.unmanaged = [{ asset: 'unmanaged', symbol: 'OTHER', amount: 1000000n, decimals: 6, usd: null, price: null, priceUpdatedAt: null, priceExpiresAt: null }];
           values.overview.policy.policy.assets = options.excluded ? ['usdc'] : 'any';
         }
         if (method === 'autopilot/log') {
           assert.equal(route.request().postDataJSON().json.tickId, run.id, 'recording read must select the displayed run');
           assert.ok(!options.approveOnly, 'approve-only views must not read recordings');
-          return route.fulfill({ json: { json: recordingFor(run) } });
+          return route.fulfill({ json: rpcAnswer(method, recordingFor(run)) });
         }
         if (options.oldRun && method === 'autopilot/evidence') {
           const input = route.request().postData() || url.search;
           values[method] = { ticks: input.includes('since') ? [] : [run], corrupt: [] };
         }
         assert.ok(method in values, `Unexpected RPC: ${method}`);
-        return route.fulfill({ json: { json: rpcValue(values, method) } });
+        return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
       }
       if (pathname.startsWith('/static/')) return route.fulfill({ path: root + pathname,
         contentType: pathname.endsWith('.js') ? 'application/javascript' : pathname.endsWith('.css') ? 'text/css' : 'font/woff2' });
@@ -232,7 +235,7 @@ async function paymentDetail(browser, root) {
     await page.getByText('Payment processing', { exact: true }).waitFor();
     assert.equal(await page.getByText('Paid', { exact: true }).count(), 0);
     await page.getByText('1 USDC to payee.near', { exact: true }).first().waitFor();
-    assert.ok(!await page.getByRole('region', { name: 'Provider-reported payment evidence' }).isVisible());
+    await assertHidden(page.getByRole('region', { name: 'Provider-reported payment evidence' }));
     await page.getByText('Provider evidence', { exact: true }).click();
     await page.getByRole('region', { name: 'Provider-reported payment evidence' }).waitFor();
     state.settled = true;
@@ -267,7 +270,7 @@ async function paymentDetail(browser, root) {
     await page.getByText('This invoice is prepared; nothing has been submitted.', { exact: true }).waitFor();
     assert.deepEqual(paymentReferences, [], 'local invoice ID and operation key are not provider correlation IDs');
     assert.equal(await page.getByRole('button', { name: 'Cancel unsubmitted invoice', exact: true }).isVisible(), true, 'cancellation is discoverable with identifiers closed');
-    assert.equal(await page.getByText(`Operation key ${prepared.operation.idempotencyKey}`, { exact: true }).isVisible(), false);
+    await assertHidden(page.getByText(`Operation key ${prepared.operation.idempotencyKey}`, { exact: true }));
     await page.getByRole('button', { name: 'Cancel unsubmitted invoice', exact: true }).click();
     assert.ok(!calls.includes('cancelPreparedInvoice'), 'opening confirmation cannot cancel');
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel invoice', exact: true }).click();
@@ -365,33 +368,33 @@ async function paymentRecovery(browser, root) {
     await page.route('**/*', async route => {
       const u=new URL(route.request().url()), p=u.pathname;
       if(u.hostname!=='frontend.test') return route.abort();
-      if(p==='/gw/me') return route.fulfill({json:{agents:[{name:'payables',owner:'owner.near',dao:false}],invoices:null,viewer:{account:'owner.near',access:{payables:{canSign:true,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
+      if(p==='/gw/me') return route.fulfill({json:{ capabilities: HOST_CAPABILITIES,agents:[{name:'payables',owner:'owner.near',dao:false}],invoices:null,viewer:{account:'owner.near',access:{payables:{canSign:true,canPropose:true,canVote:true,canExecute:true,canManage:true}}}}});
       if(p.includes('/rpc/')) {
         const method=p.split('/rpc/')[1];
         if(method==='paymentStatus') statusReads++;
         if(['owner/prepare','owner/submit','pay'].includes(method)) writes.push(method);
-        if((scenario==='held-error' && method==='held') || (scenario==='owner-read-error' && method==='owner/actions') || (scenario==='history-error' && method==='paymentHistory') || (scenario==='status-error' && method==='paymentStatus')) return route.fulfill({status:500,json:{json:{defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'}}});
+        if((scenario==='held-error' && method==='held') || (scenario==='owner-read-error' && method==='owner/actions') || (scenario==='history-error' && method==='paymentHistory') || (scenario==='status-error' && method==='paymentStatus')) return route.fulfill({status:500,json:{ json: {defined:false,code:'INTERNAL_SERVER_ERROR',message:'Fixture read unavailable'} }});
         const settled=scenario==='rejection'||scenario==='unverified-history'||(scenario==='receipt'&&reloaded);
         const held=['latest-terms','wallet-submitted','owner-read-error','status-error','rejection','focused-card'].includes(scenario)||(scenario==='receipt'&&!reloaded);
         const values={
-          get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:'owner.near'},grant:scenario==='grantless'?null:{label:'payout',expiresAt},dao:null},
-          overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:'0',confidential:'10000000',usd:10,price:1}],policy:{policy:{actions:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{},limits:{}},usage:{budget:{}},cooldowns:{}}},
+          get instance() { return { agentId: this.setup?.agentId ?? null, executor: this.setup?.executor !== false }; }, setup:{executor:false,agentId:'fixture',wallet:'agent.near',owner:{type:'near',account_id:'owner.near', public_key: 'ed25519:fixture'},grant:scenario==='grantless'?null:{label:'payout',expiresAt, id: 'grant-fixture'},dao:null},
+          overview:{agentId:'fixture',digest:'fixture',notInForce:null,agreed:[],unmanaged:[],target:{usdc:1},rebalance:{minLegUsd:1,maxCostBps:100},book:[{asset:'usdc',symbol:'USDC',decimals:6,public:0n,confidential:10000000n,usd:10,price:1, priceUpdatedAt: null, priceExpiresAt: null}],policy:{policy:{actions:['transfer'],frozen:false,destinations:{mode:'only',list:[]},assets:'any',budget:{ daily_usd: null, weekly_usd: null, monthly_usd: null},limits:{}, confidential: true, owner_approval: true, max_actions_per_hour: null, timelock_ms: 0},usage:{budget:{ daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 }},cooldowns:{ policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true}, grants: []},
           'treasury/get':null,held:scenario==='focused-card' ? [...(!reloaded?[{at,kind:'remote',request,correlationId:'payment',approvalId:'approval'}]:[]),{at,kind:'remote',request:{...request,amount:'2000000'},correlationId:'second-payment',approvalId:'second-approval'}] : held?[{at,kind:'remote',request,correlationId:'payment',approvalId:'approval'}]:[],unresolved:[],activity:[],'inbox/list':[],'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list':scenario==='latest-terms' ? [
-            {id:'declined',payee:'payee.near',status:'declined',terms:{maxAmount:'1',until:'2030-01-01T00:00:00Z'}},
-            {id:'other',payee:'other.near',status:'agreed',terms:{maxAmount:'2',until:'2030-01-01T00:00:00Z'}},
-            {id:'new',payee:'payee.near',status:'agreed',terms:{maxAmount:'200000000',until:'2030-01-01T00:00:00Z'}},
-            {id:'old',payee:'payee.near',status:'agreed',terms:{maxAmount:'100000000',until:'2020-01-01T00:00:00Z'}}
+            {at:'2026-10-01T00:00:00Z',origin:'payee',note:'',amount:'1',id:'declined',payee:'payee.near',status:'declined',terms:{maxAmount:'1',until:'2030-01-01T00:00:00Z'}},
+            {at:'2026-10-01T00:00:00Z',origin:'payee',note:'',amount:'2',id:'other',payee:'other.near',status:'agreed',terms:{maxAmount:'2',until:'2030-01-01T00:00:00Z'}},
+            {at:'2026-10-01T00:00:00Z',origin:'payee',note:'',amount:'200000000',id:'new',payee:'payee.near',status:'agreed',terms:{maxAmount:'200000000',until:'2030-01-01T00:00:00Z'}},
+            {at:'2026-10-01T00:00:00Z',origin:'payee',note:'',amount:'100000000',id:'old',payee:'payee.near',status:'agreed',terms:{maxAmount:'100000000',until:'2020-01-01T00:00:00Z'}}
           ] : [],'owner/pending':[],
-          'owner/actions':['wallet-submitted','rejection'].includes(scenario)?[{correlationId:'wallet-action',type:'approval_vote',signer:'wallet',stage:scenario==='rejection'?'settled':'submitted',expiresAt:'2020-01-01T00:00:00Z',ownerSucceeded:scenario==='rejection',status:scenario==='rejection'?'FAILED':null,payment:{correlationId:'payment',verdict:scenario==='rejection'?'reject':'approve'}}]:[],
+          'owner/actions':['wallet-submitted','rejection'].includes(scenario)?[{correlationId:'wallet-action',type:'approval_vote',signer:'wallet',stage:scenario==='rejection'?'settled':'submitted',expiresAt:'2020-01-01T00:00:00Z',ownerSucceeded:scenario==='rejection',status:scenario==='rejection'?'FAILED':null,payment:{correlationId:'payment',verdict:scenario==='rejection'?'reject':'approve'}, failureCode: null}]:[],
           paymentHistory:{items:scenario==='receipt'&&reloaded?[{correlationId:'payment',at}]:[],complete:scenario!=='history-incomplete'},
-          paymentStatus:{status:scenario==='rejection'?'FAILED':settled?'SUCCESS':'PENDING_APPROVAL',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:scenario==='unverified-history'?null:'approval',expiresAt,detailError:null},
-          'autopilot/get':{on:false,everyMin:60,maxUsd:10},'autopilot/evidence':{ticks:[]},'strategy/get':{},invoices:[],ledger:[],reconcileBooks:[],
+          paymentStatus:{status:scenario==='rejection'?'FAILED':settled?'SUCCESS':'PENDING_APPROVAL',failureCode:null,createdAt:at,updatedAt:at,request,approvalId:scenario==='unverified-history'?null:'approval',expiresAt,detailError:null, evidence: { txHash: null, destinationTxHash: null, refundTxHash: null, refundTo: null, refundedAmount: null }},
+          'autopilot/get':{on:false,everyMin:60,maxUsd:10, lastRun: null, nextRun: null},'autopilot/evidence':{ticks:[], corrupt: []},'strategy/get':strategyStatus(),invoices:[],ledger:[],reconcileBooks:[],
         };
         if (scenario === 'local-history') {
-          values.activity = [{ at, kind: 'invoices', request, correlationId: 'retained-payment', status: 'SUCCESS' }];
+          values.activity = [{ at, kind: 'invoices', request, correlationId: 'retained-payment', status: 'SUCCESS', approvalId: 'approval-fixture' }];
           values.paymentHistory = { items: [], complete: false };
         }
-        return route.fulfill({json:{json:rpcValue(values, method)}});
+        return route.fulfill({json:rpcAnswer(method, rpcValue(values, method))});
       }
       if(p.startsWith('/static/')) return route.fulfill({path:root+p,contentType:p.endsWith('.js')?'application/javascript':p.endsWith('.css')?'text/css':'font/woff2'});
       return route.fulfill({path:root+'/index.html',contentType:'text/html'});
@@ -414,11 +417,11 @@ async function paymentRecovery(browser, root) {
       if(scenario==='receipt') { reloaded=true; await page.reload(); await page.getByText('Paid',{exact:true}).waitFor(); assert.match(await page.locator('body').innerText(),/123\.456789 USDC/); }
       if(scenario==='wallet-submitted') { await page.getByText(/Submission attempted.*checking/i).first().waitFor(); assert.equal(await page.getByRole('button',{name:'Sign approval',exact:true}).count(),0); assert.equal(await page.getByRole('button',{name:'Sign rejection',exact:true}).count(),0); await page.reload(); await page.getByText(/Submission attempted.*checking/i).first().waitFor(); assert.equal(await page.getByRole('button',{name:'Sign approval',exact:true}).count(),0); }
       if(scenario==='wallet-submitted') { await page.getByRole('link',{name:'Review the existing owner action',exact:true}).click(); await page.locator('#owner-wallet-action').waitFor(); await page.getByRole('link',{name:'Follow the payment outcome',exact:true}).waitFor(); }
-      if(scenario==='owner-read-error') { await page.getByText(/Fixture read unavailable/).first().waitFor(); assert.equal(await page.getByRole('button',{name:'Sign approval',exact:true}).count(),0); }
-      if(scenario==='held-error') { await page.getByText(/Fixture read unavailable/).first().waitFor({timeout:12000}); assert.doesNotMatch(await page.locator('body').innerText(),/Checking payments and owner actions/); }
-      if(scenario==='history-error') { await page.getByText(/Fixture read unavailable/).first().waitFor(); assert.doesNotMatch(await page.locator('body').innerText(),/Nothing waits for a vote/); }
+      if(scenario==='owner-read-error') { await page.getByText(UNAVAILABLE).first().waitFor(); assert.equal(await page.getByRole('button',{name:'Sign approval',exact:true}).count(),0); }
+      if(scenario==='held-error') { await page.getByText(UNAVAILABLE).first().waitFor({timeout:12000}); assert.doesNotMatch(await page.locator('body').innerText(),/Checking payments and owner actions/); }
+      if(scenario==='history-error') { await page.getByText(UNAVAILABLE).first().waitFor(); assert.doesNotMatch(await page.locator('body').innerText(),/Nothing waits for a vote/); }
       if(scenario==='status-error') {
-        await page.getByText(/Fixture read unavailable/).first().waitFor();
+        await page.getByText(UNAVAILABLE).first().waitFor();
         const reads=statusReads;
         await page.waitForTimeout(1600);
         assert.equal(statusReads,reads,'A failed status read must stop automatic polling until explicit retry');

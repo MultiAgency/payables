@@ -1,3 +1,4 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 const { runTask } = require('./fixtures/task.cjs');
 const assert = require('node:assert/strict');
 async function standaloneDemo(browser, root) {
@@ -8,7 +9,7 @@ async function standaloneDemo(browser, root) {
     await page.route('**/*', route => {
       const url = new URL(route.request().url());
       if (url.hostname !== 'frontend.test') return route.abort();
-      if (url.pathname === '/gw/me') return route.fulfill({ json: { selfService: true, agents: [], invoices: null, viewer: null } });
+      if (url.pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES, selfService: true, agents: [], invoices: null, viewer: null } });
       if (url.pathname.startsWith('/gw/') || url.pathname.includes('/rpc/')) { requests.push(url.pathname); return route.abort(); }
       return route.fulfill({ path: url.pathname.startsWith('/static/') ? root + url.pathname : root + '/index.html' });
     });

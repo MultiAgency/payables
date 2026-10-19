@@ -1,5 +1,6 @@
 import { useGateway } from "./gateway-context";
 import { BASE } from "../shared/client";
+import { queries } from "../shared/queries";
 import { UsersThree, Wallet as WalletIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { errorMessage, short, useAttempt } from "../shared/lib";
 import { ensureDao, ownerName, ownerSigner, type Setup, type Signer, useOwnerAction, useSigner } from "../features/owner/owner";
 import { linkTrezuDao } from "../features/funding/treasury";
+import { OWNER_TREASURY, useProvides } from "./capabilities";
 import { Button, Card, ErrorBox, input, Section, Spinner, Step } from "../shared/ui";
 import { connect, dao, send, useWallet } from "../features/owner/wallet";
 import { SetupActions, useSetupActions } from "./setup-progress";
@@ -38,7 +40,8 @@ export function Onboarding({ setup }: { setup: Setup }) {
   const existing = useSetupActions(true);
   const { canSign } = useSigner(setup);
   const viewer = useViewer();
-  const canLink = useCanCall("treasury/link");
+  const linkPermitted = useCanCall("treasury/link"), ownerTreasury = useProvides(OWNER_TREASURY);
+  const canLink = linkPermitted && ownerTreasury;
   const canPrepare = useCanCall("owner/prepare");
   const [choice, setChoice] = useState<Signer | null>(setup.dao ? "dao" : null);
   const [funding, setFunding] = useState<string>();
@@ -59,7 +62,7 @@ export function Onboarding({ setup }: { setup: Setup }) {
   // Poll while the owner account's funding proposal is out.
   useEffect(() => {
     if (!funding || setup.dao?.funded) return;
-    const timer = setInterval(() => queryClient.invalidateQueries({ queryKey: ["setup"] }), 5_000);
+    const timer = setInterval(() => queryClient.invalidateQueries({ queryKey: queries.setup.queryKey, exact: true }), 5_000);
     return () => clearInterval(timer);
   }, [funding, setup.dao?.funded, queryClient]);
 

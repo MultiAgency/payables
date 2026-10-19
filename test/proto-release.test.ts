@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { generateKey, Near, type PrivateKey } from "near-kit";
 import { issueChallenge, verifySignIn } from "../src/signin.js";
-import { readGateway, supplierUrl } from "../web/src/app/gateway-contract.js";
+import { readGateway, payeeHostUrl } from "../web/src/app/gateway-contract.js";
 import { signingHost } from "../src/gateway/signing-host.js";
 
 test("fallback callback mismatch reproduces; matching signing host works for either hostname", async () => {
@@ -37,7 +37,7 @@ test("Proto r2 explicit static mapping and scoped managed mapping preserve link 
   ], viewer: null, setupAreas: ["payables"], invoices: "https://wrong.test/" }),
   { hostname: "payables.multiagency.ai", protocol: "https:", pathname: "/a/payout/" }))!;
   for (const name of ["payout", "own-fixture"]) {
-    const selected = supplierUrl(gateway, `/a/${name}`)!;
+    const selected = payeeHostUrl(gateway, `/a/${name}`)!;
     const url = new URL(selected);
     const id = "exact-ID /+?&=#%";
     url.searchParams.set("workOrder", id);
@@ -47,6 +47,6 @@ test("Proto r2 explicit static mapping and scoped managed mapping preserve link 
     assert.equal(reloaded.searchParams.get("source"), name === "payout" ? "proto" : "managed");
     if (name === "payout") assert.deepEqual(reloaded.searchParams.getAll("tag"), ["a", "b"]);
   }
-  for (const name of ["missing", "unknown"]) assert.equal(supplierUrl(gateway, `/a/${name}`), undefined);
-  assert.equal(supplierUrl({ ...gateway, setupAreas: undefined }, "/a/missing"), "https://wrong.test/");
+  for (const name of ["missing", "unknown"]) assert.equal(payeeHostUrl(gateway, `/a/${name}`), undefined);
+  assert.equal(payeeHostUrl({ ...gateway, setupAreas: undefined }, "/a/missing"), "https://wrong.test/");
 });

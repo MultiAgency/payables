@@ -1,0 +1,8 @@
+{
+  "story": "Translation purchase order",
+  "payeeLabel": "Tomás Translates",
+  "payee": "payee.near",
+  "amountUsdc": "3.75",
+  "note": "Translate onboarding guide to Spanish",
+  "deadlineDays": 3
+}

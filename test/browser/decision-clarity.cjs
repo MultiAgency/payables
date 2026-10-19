@@ -1,4 +1,5 @@
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
+const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 /** Offline presentation boundaries. All requests are intercepted; no executor or wallet starts. */
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -17,7 +18,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
       if (url.hostname !== 'frontend.test') return route.abort();
-      if (url.pathname === '/gw/me') return route.fulfill({ json: {
+      if (url.pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES,
         agents: ['treasury', 'payables'].map(name => ({ name, area: name, owner: 'owner.near', dao: false })),
         invoices: null, viewer: { account: 'owner.near', access: Object.fromEntries(['treasury', 'payables'].map(name => [name,
           { canSign: !options.member, canPropose: !options.member, canVote: !options.member, canExecute: !options.member, canManage: !options.member }])) },
@@ -31,15 +32,15 @@ const root = path.resolve(process.argv[2] || 'web/dist');
         if (method === 'autopilot/stop') on = false;
         const values = {
           instance: { agentId: 'fixture', area: treasury ? 'treasury' : 'payables', executor: !options.approveOnly },
-          setup: { agentId: 'fixture', executor: !options.approveOnly, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near' },
-            grant: options.noGrant ? null : { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z' }, dao: null },
+          setup: { agentId: 'fixture', executor: !options.approveOnly, wallet: 'agent.near', owner: { type: 'near', account_id: 'owner.near', public_key: 'ed25519:fixture' },
+            grant: options.noGrant ? null : { label: 'treasury', expiresAt: '2030-01-01T00:00:00Z', id: 'grant-fixture' }, dao: null },
           overview: { agentId: 'fixture', area: treasury ? 'treasury' : 'payables', digest: 'fixture', notInForce: null, agreed: [], unmanaged: [], grants: [],
             book: [], target: {}, rebalance: { minLegUsd: 1, maxCostBps: 100 },
-            policy: { policy: { actions: treasury ? ['swap'] : ['transfer'], frozen: false }, usage: { budget: {} }, cooldowns: {} } },
+            policy: { policy: { assets: 'any', actions: treasury ? ['swap'] : ['transfer'], frozen: false, confidential: true, owner_approval: true, limits: {}, max_actions_per_hour: null, destinations: { mode: 'only', list: [] }, budget: { daily_usd: null, weekly_usd: null, monthly_usd: null }, timelock_ms: 0 }, usage: { budget: { daily: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, weekly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }, monthly: { limit_usd: null, spent_usd: '0', remaining_usd: null, resets_at: null }}, timelock: { delay_ms: 0, scheduled_count: 0 } }, cooldowns: { policy_change_available_at: null, unfreeze_available_at: null}, wallet_id: 'agent.near', revision: 1, status: 'APPLIED', provider_policy_synced: true } },
           'treasury/get': null, held: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], invoices: [],
-          unresolved: treasury ? [] : [{ key: 'fixture', at: '2026-10-01T00:00:00Z' }],
-          'autopilot/get': { on, everyMin: 60, maxUsd: 10 }, 'autopilot/stop': undefined,
-          'autopilot/evidence': { ticks: [] }, 'owner/actions': [],
+          unresolved: treasury ? [] : [{ kind: 'pay', request: {}, status: null, sent: true, key: 'fixture', at: '2026-10-01T00:00:00Z' }],
+          'autopilot/get': { on, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null }, 'autopilot/stop': { on: false },
+          'autopilot/evidence': { ticks: [], corrupt: [] }, 'owner/actions': [],
           activity: ['refused', 'unknown', 'settled'].map((state, i) => ({ at: `2026-10-01T00:00:0${i}Z`, kind: 'transfer',
             request: { asset: 'usdc', amount: '1000000', recipient: `${state}.near` }, policyRevision: 1, policyDigest: 'fixture',
             ...(state === 'refused' ? { refused: 'never_submitted' } : state === 'settled' ? { correlationId: 'settled', status: 'SUCCESS' } : {}) })),
@@ -47,7 +48,7 @@ const root = path.resolve(process.argv[2] || 'web/dist');
         if (method === 'reconcileBooks') return route.fulfill({ status: 503,
           json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Books unavailable' } } });
         assert.ok(method in values, `Unexpected call: ${method}`);
-        return route.fulfill({ json: { json: rpcValue(values, method) } });
+        return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
       }
       return route.fulfill({ path: url.pathname.startsWith('/static/') ? root + url.pathname : path.join(root, 'index.html') });
     });
@@ -69,13 +70,13 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       await page.getByText('success', { exact: true }).waitFor();
       assert.ok(!calls.includes('reconcileBooks'));
       await page.getByText('Compare balances with records', { exact: true }).click();
-      await page.getByText('Books unavailable', { exact: true }).waitFor();
+      await page.getByText(UNAVAILABLE, { exact: true }).waitFor();
       assert.ok(calls.includes('reconcileBooks'), 'only the opened disclosure starts books reads, including normal retries');
       await page.getByText('refused · never submitted', { exact: true }).waitFor();
     });
     await check('one incomplete-check explanation retains another agent’s unresolved item', { route: '/', fail: 'setup' }, async page => {
       await page.getByText(/1 money action has no proven outcome/).waitFor();
-      assert.equal(await page.getByText('Fixture observation unavailable', { exact: true }).count(), 1);
+      assert.equal(await page.getByText(UNAVAILABLE, { exact: true }).count(), 1);
       assert.equal(await page.getByRole('link', { name: 'Check status', exact: true }).getAttribute('href'), '/a/payables/activity');
     });
     await check('grant tasks link directly to the appropriate area task', { route: '/', noGrant: true }, async (page, calls) => {
@@ -95,14 +96,14 @@ const root = path.resolve(process.argv[2] || 'web/dist');
       assert.ok(!calls.includes('treasury/get'));
     });
     await check('stop survives cold overview failure', { fail: 'overview' }, async (page, calls) => {
-      await page.getByText('Fixture observation unavailable', { exact: true }).waitFor();
+      await page.getByText(UNAVAILABLE, { exact: true }).waitFor();
       await page.getByRole('button', { name: 'Turn off', exact: true }).click();
       await page.getByText('Future scheduled runs are off. A run already started can still submit further operations; submitted operations may finish.', { exact: true }).waitFor();
       assert.deepEqual(calls.filter(c => /stop|enable|prepare|submit|tick|save/.test(c)), ['autopilot/stop']);
     });
     for (const options of [{ member: true, fail: 'overview' }, { approveOnly: true, fail: 'overview' }, { fail: 'setup' }])
       await check(`no stop without confirmed authority ${JSON.stringify(options)}`, options, async (page, calls) => {
-        await page.getByText('Fixture observation unavailable', { exact: true }).waitFor();
+        await page.getByText(UNAVAILABLE, { exact: true }).waitFor();
         assert.equal(await page.getByRole('button', { name: 'Turn off', exact: true }).count(), 0);
         assert.ok(!calls.includes('autopilot/stop'));
       });

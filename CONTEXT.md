@@ -134,7 +134,7 @@ grant expiry. New submission readiness requires an observed balance equal to the
 are not prevented. Expiry stops new submissions, not already accepted work, and does not return residual
 funds. Work orders appear in Payables' Agreements and Payments; catalog brief 03 retains its original
 title, Invoicing & Purchase-Order Management, in the audit. The implementation is offline-tested,
-not observed on mainnet. Supplier conversion and forwarding are separate, unimplemented work.
+not observed on mainnet. Payee conversion and forwarding are separate, unimplemented work.
 
 **Strategy**:
 The owner's target allocation and limits for a treasury agent. The autopilot acts only while its live

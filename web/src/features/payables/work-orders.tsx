@@ -1,7 +1,8 @@
-import { supplierUrl } from "../../app/gateway-contract";
-import { useState } from "react";
+import { payeeHostUrl } from "../../app/gateway-contract";
+import { useEffect, useState } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BASE, client, errorMessage, fromUnits, toUnits } from "../../shared/lib";
+import { BASE, client, errorMessage, fromUnits, queries, toUnits } from "../../shared/lib";
 import { useAgent } from "../../app/agent-context";
 import { gatewayQueries } from "../../app/queries";
 import { useCanCall } from "../../app/viewer";
@@ -10,12 +11,11 @@ import { accountError, deadlineError } from "../../shared/form-validation";
 import { Badge, Button, CopyButton, Details, ErrorBox, Loading, QueryError, Section } from "../../shared/ui";
 import { ConfirmButton } from "../owner/confirm-button";
 import { useOwnerAction, useSigner, type OwnerAction } from "../owner/owner";
-import { workOrderProgress } from "../../../../src/work-order-protocol";
-import type { WorkOrderOwnerAction } from "../../../../src/work-order-protocol.js";
+import type { OwnerInputs } from "@multiagency/sdk";
 
-const listKey = ["workOrders", BASE];
 type Order = Awaited<ReturnType<typeof client.workOrders.list>>[number];
 type Snapshot = Awaited<ReturnType<typeof client.workOrders.get>>;
+type WorkOrderOwnerAction = OwnerInputs["workOrders/prepare"]["action"];
 const date = (value: string) => new Date(value).toLocaleString();
 // getRandomValues also works for local HTTP previews; identity always uses secure random bytes.
 const newIdentity = () => {
@@ -28,14 +28,18 @@ const newIdentity = () => {
 /** Work-order authority and payment observations stay separate from the shared payout agent. */
 export function WorkOrders({ payments = false }: { payments?: boolean }) {
   const cache = useQueryClient();
-  const orders = useQuery({ queryKey: listKey, queryFn: () => client.workOrders.list(), retry: false });
-  const [selected, select] = useState<string>();
+  const orders = useQuery(queries.workOrders);
+  // A deep link (`/payees?order=<id>`) opens that work order.
+  const linked = (useSearch({ strict: false }) as { order?: string }).order;
+  const [selected, select] = useState<string | undefined>(linked);
+  useEffect(() => { if (linked) select(linked); }, [linked]);
   const [formVersion, setFormVersion] = useState(0);
   return <Section title={payments ? "Work order payments" : "Work orders"}
     description="One payee, a fixed USDC amount and a deadline. Each work order has separate payment authority and still requires owner approval.">
-    {!payments && <Details key={formVersion} summary="Create a work order"><NewWorkOrder onCreated={id => { select(id); setFormVersion(value => value + 1); void cache.invalidateQueries({ queryKey: listKey }); }} /></Details>}
+    {!payments && <Details key={formVersion} summary="Create a work order"><NewWorkOrder onCreated={id => { select(id); setFormVersion(value => value + 1); void cache.invalidateQueries({ queryKey: queries.orpc.workOrders.key() }); }} /></Details>}
     {orders.isPending && <Loading label="Loading work orders" />}
     {orders.error && <QueryError error={orders.error} retry={() => orders.refetch()} />}
+    {orders.isSuccess && linked && !orders.data.some(order => order.id === linked) && <p role="status" className="text-sm">This link names a work order that isn't recorded for this agent. Nothing is opened.</p>}
     {orders.isSuccess && orders.data.length === 0 && <p className="text-sm text-muted-foreground">No work orders yet.{payments && " Create one in Agreements."}</p>}
     <ul className="divide-y">
       {orders.data?.map(order => <li key={order.id} id={`work-order-${order.id}`} className="scroll-mt-24 py-4">
@@ -98,7 +102,7 @@ function actionName(action: OwnerAction): WorkOrderOwnerAction {
 }
 
 export function WorkOrderPayment({ id, onResume, disabled }: { id: string; onResume: () => void; disabled: boolean }) {
-  const query = useQuery({ queryKey: listKey, queryFn: () => client.workOrders.list(), retry: false });
+  const query = useQuery(queries.workOrders);
   const order = query.data?.find(order => order.id === id);
   return <div className="flex flex-col gap-4" aria-label="Isolated payout">
     {query.isPending && <Loading label="Loading the retained payout" />}
@@ -110,7 +114,7 @@ export function WorkOrderPayment({ id, onResume, disabled }: { id: string; onRes
 function WorkOrderDetail({ order }: { order: Order }) {
   const { setup } = useAgent();
   const signer = useSigner(setup);
-  const query = useQuery({ queryKey: [...listKey, order.id], queryFn: () => client.workOrders.get({ id: order.id }), refetchInterval: 10_000, retry: false });
+  const query = useQuery(queries.workOrder(order.id));
   const gateway = useQuery(gatewayQueries.session);
   const action = useOwnerAction(setup, { followHref: `#work-order-${order.id}`, transport: {
     prepare: ({ action, signer }, options) => client.workOrders.prepare({ id: order.id, action: actionName(action), signer }, options),
@@ -125,7 +129,8 @@ function WorkOrderDetail({ order }: { order: Order }) {
   const canFile = useCanCall("workOrders/file");
   const canDeposit = useCanCall("workOrders/deposit");
   const snapshot = query.data;
-  const progress = snapshot && workOrderProgress(snapshot);
+  // Readiness is computed by the server from the same observations; the view never re-derives it.
+  const progress = snapshot?.progress;
   const expired = Date.parse(order.until) <= Date.now();
   const open = snapshot?.ownerActions.some(a => a.stage === "prepared" || a.stage === "submitted");
   const disabled = !signer.canSign || action.busy || Boolean(open || query.error || snapshot?.error);
@@ -135,7 +140,7 @@ function WorkOrderDetail({ order }: { order: Order }) {
       description={`${terms} ${description}`} reviewKey={JSON.stringify([order, ownerAction])}
       disabled={disabled || unavailable} onConfirm={() => void action.run(ownerAction)} />;
   let link: string | undefined;
-  const intake = gateway.error ? undefined : supplierUrl(gateway.data, BASE);
+  const intake = gateway.error ? undefined : payeeHostUrl(gateway.data, BASE);
   if (intake) { const url = new URL(intake, location.origin); url.searchParams.set("workOrder", order.id); link = url.href; }
   return <div className="mt-4 flex flex-col gap-4 text-sm">
     {query.isPending && <Loading label="Checking this work order" />}
@@ -148,7 +153,7 @@ function WorkOrderDetail({ order }: { order: Order }) {
       <p>Confidential balance: {snapshot.balance === null ? "unavailable" : `${fromUnits(snapshot.balance, 6)} USDC`}. {snapshot.grant ? `Grant expires ${date(snapshot.grant.expiresAt)}.` : "No matching live grant observed."}</p>
       {progress && <p>Next: {({ authorize: "authorize the dedicated agent", policy: "review its signed policy", grant: "authorize its expiring grant", fund: "fund this payout", funding_review: "review excess funding", submit: "submit the fixed payout", expired: "review expired authority and retained funds", unavailable: "restore current observations" } as Record<string, string>)[progress.stage] ?? "follow the retained payment"}.</p>}
       {progress?.excess && <p role="alert">Excess funding: {fromUnits(progress.excess, 6)} USDC. New submission waits for exact funding. Keep these funds in this account until a separately authorized recovery is available.</p>}
-      {progress?.expired && progress.residual && <p role="alert">Deadline passed with {fromUnits(progress.residual, 6)} USDC still observed in this account. Expiry does not return funds. Reconcile the retained payment and separately authorize recovery; do not replace this payout or loosen its supplier policy.</p>}
+      {progress?.expired && progress.residual && <p role="alert">Deadline passed with {fromUnits(progress.residual, 6)} USDC still observed in this account. Expiry does not return funds. Reconcile the retained payment and separately authorize recovery; do not replace this payout or loosen its payee policy.</p>}
       {snapshot.invoice && ["unknown", "failed", "refused", "needs_review"].includes(snapshot.invoice.status) && <p role="alert">Follow this retained payment before any further action. Approved compensation remains reserved. No replacement payout will be prepared here.</p>}
       <div className="flex flex-wrap gap-2">
         {!snapshot.agentId && control("Authorize work order", { type: "agent_create" }, "Sign a separate policy allowing only confidential USDC payments to this payee, with this amount as the per-payment cap. Every payout requires owner approval.", expired || snapshot.ownerActions.some(a => a.type === "agent_create"))}

@@ -13,13 +13,6 @@ test("the signed-out page reads nothing from the server", () => {
   assert.deepEqual(imports.sort(), ["./public/payables-demo", "./app/session", "./features/evidence/showcase", "@/components/ui/button", "@phosphor-icons/react"].sort());
 });
 
-test("legacy public links retain static presentation without authored run state or playback", () => {
-  const source = readFileSync(new URL("../web/src/public/prototype-explorer.tsx", import.meta.url), "utf8");
-  const imports = [...source.matchAll(/from "([^"]+)"/g)].map(m => m[1]);
-  assert.deepEqual(imports.sort(), ["../features/evidence/showcase", "react"].sort());
-  assert.doesNotMatch(source, /useState|setTimeout|setInterval|@ag-ui|PublicDemo|demoEvents/);
-});
-
 test("its prototype cards read nothing either, and show requirements and their phases, never the evidence", () => {
   const source = readFileSync(new URL("../web/src/features/evidence/showcase.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(source, /fetch\(|gw[<(]|client\.|useQuery/);

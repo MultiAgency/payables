@@ -1,8 +1,9 @@
+const { HOST_CAPABILITIES } = require('./fixtures/host.cjs');
 /** A validated recording end remains visible while the separate run receipt is delayed or unreadable. */
 const assert = require('node:assert/strict');
 const { join } = require('node:path');
 const { runTask } = require('./fixtures/task.cjs');
-const { rpcValue } = require('./fixtures/rpc.cjs');
+const { rpcValue, rpcAnswer, UNAVAILABLE } = require('./fixtures/rpc.cjs');
 const { makeTick } = require('./fixtures/run.cjs');
 const { workspaceEvidence } = require('./fixtures/workspace.cjs');
 const { tickLog } = require('../../src/agui.ts');
@@ -32,7 +33,7 @@ async function delayedRunReceipt(browser, root) {
   await page.route('**/*', async route => {
     const { hostname, pathname } = new URL(route.request().url());
     if (hostname !== 'frontend.test') return route.abort();
-    if (pathname === '/gw/me') return route.fulfill({ json: {
+    if (pathname === '/gw/me') return route.fulfill({ json: { capabilities: HOST_CAPABILITIES,
       agents: [{ name: 'treasury', owner: 'owner.near', dao: false }], invoices: null,
       viewer: { account: 'member.near', access: { treasury: { canSign: false, canPropose: false, canVote: false, canExecute: false, canManage: false } } },
     } });
@@ -40,18 +41,18 @@ async function delayedRunReceipt(browser, root) {
       const method = pathname.split('/rpc/')[1]; calls.push(method);
       if (method === 'autopilot/log') {
         assert.equal(route.request().postDataJSON().json.tickId, tick.id);
-        return route.fulfill({ json: { json: recording(state.recordingEnded) } });
+        return route.fulfill({ json: rpcAnswer(method, recording(state.recordingEnded)) });
       }
       if (method === 'autopilot/evidence' && state.receipt === 'unavailable') return route.fulfill({
         status: 503, json: { json: { defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'Run receipt unavailable' } },
       });
       const values = {
         instance: { agentId: tick.agentId, executor: true }, setup: { ...setup, executor: true }, overview: overview('treasury'),
-        'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10 },
-        'autopilot/evidence': { ticks: [state.receipt === 'available' ? tick : { ...tick, end: null }] },
+        'treasury/get': null, 'autopilot/get': { on: false, everyMin: 60, maxUsd: 10, lastRun: null, nextRun: null },
+        'autopilot/evidence': { ticks: [state.receipt === 'available' ? tick : { ...tick, end: null }], corrupt: [] },
         held: [], unresolved: [], activity: [], 'inbox/list': [], 'compensation/list': { agreements: [], requests: [], history: [], payments: [] }, 'workOrders/list': [], 'agreements/list': [], 'owner/pending': [], 'owner/actions': [],
       };
-      return route.fulfill({ json: { json: rpcValue(values, method) } });
+      return route.fulfill({ json: rpcAnswer(method, rpcValue(values, method)) });
     }
     if (pathname.startsWith('/static/')) return route.fulfill({ path: join(root, pathname),
       contentType: pathname.endsWith('.js') ? 'application/javascript' : pathname.endsWith('.css') ? 'text/css' : 'font/woff2' });
@@ -73,7 +74,7 @@ async function delayedRunReceipt(browser, root) {
   assert.equal(await timeline.getByText(/^Run outcome:/).count(), 0, 'the delayed receipt cannot fabricate an original outcome');
 
   state.receipt = 'unavailable';
-  const receiptError = page.getByRole('alert').filter({ hasText: 'Run receipt unavailable' });
+  const receiptError = page.getByRole('alert').filter({ hasText: UNAVAILABLE });
   await receiptError.waitFor();
   assert.ok(await terminalSummary.isVisible(), 'a receipt read failure must retain the validated terminal summary');
   assert.equal(await timeline.getByText(/^Last recorded:|^Run started\. No end recorded yet\.$/).count(), 0,
