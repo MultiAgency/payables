@@ -1,22 +1,27 @@
-# Standalone Payables sign-in release — 2026-10-15 r2
+# Standalone Payables sign-in release — 2026-10-15 r1
+
+**Superseded by [r2](standalone-signin-release-r2.md).** The completed
+[production comparison](standalone-signin-production-comparison.md) found unrelated frontend
+differences and a missing packaged tsconfig, plus reference release-setting differences. R2 retains
+the deployed bytes/settings and applies only the signing backport. R1 archives remain intact for audit.
 
 **Frozen local candidate; not deployed, pushed, restarted or authorized to ship.** No domain/DNS
 change or money action was performed. This release is separate from Proto's shared release.
 
 ## Exact candidate
 
-Local image: `payables-standalone-signin:20261015-r2` (linux/amd64).
-Image ID: `sha256:46531194c4490ca9629437cd5866fdc48e2ff9bc4ae34817709e25b7440b5edf`.
+Local image: `payables-standalone-signin:20261015-r1` (linux/amd64).
+Image ID: `sha256:db759c6b837500c453c92bf0e1049b785ca5359754509c31499afb3684a24122`.
 Pinned Node base: `node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5`.
 
 Review artifacts are under this repository's ignored `.test-artifacts/`:
 
-- `payables-standalone-signin-20261015-r2.image.tar`: exact executable image export.
-- `payables-standalone-signin-20261015-r2.source.tgz`: frozen source, packaged frontend bytes,
+- `payables-standalone-signin-20261015-r1.image.tar`: exact executable image export.
+- `payables-standalone-signin-20261015-r1.source.tgz`: frozen source, packaged frontend bytes,
   Dockerfile, offline tests, review patch, file manifests, logs and this runbook.
-- `payables-standalone-signin-20261015-r2.SHA256SUMS`: archive hashes, also recorded in the
-  accompanying `docs/standalone-signin-artifacts-r2.json`. Verify these before loading, extracting or publishing.
-- `standalone-signin-20261015-r2/review/`: readable local review material.
+- `payables-standalone-signin-20261015-r1.SHA256SUMS`: archive hashes, also recorded in the
+  accompanying `docs/releases/standalone-signin-artifacts.json`. Verify these before loading, extracting or publishing.
+- `standalone-signin-20261015-r1/review/`: readable local review material.
 
 The backend baseline is Git `adf71a8f39d5a098fbad8f5ff9b4dcfd7615d031`, with exactly three runtime
 file changes: `src/gateway/server.ts`, `src/gateway/config.ts` and new
@@ -24,23 +29,17 @@ file changes: `src/gateway/server.ts`, `src/gateway/config.ts` and new
 the baseline. Unrelated contributor/integration backend edits remain in the working checkout and
 are excluded from this candidate. No Git reset, commit or working-tree overwrite was used.
 
-R2 copies all deployed application bytes captured read-only from deployment
-`083e4cd0-c940-4480-a3c7-cf3756319edf`, provider image digest
-`sha256:83c83624bbba29aeb6a0eb62e34a8e08f85de56424b6a9fe07773fbfc0f5b9c0`.
-The backend before the signing fix matches that Git baseline byte-for-byte. All other captured
-runtime files remain identical, including deployed `tsconfig.json` and all 28 frontend files.
-Both public hostnames served those frontend files with matching hashes. No frontend is rebuilt.
-The frontend source in the archive is baseline verification context; the image copies the exact
-compiled deployed bytes. Additional gateway-contract source is verification-only.
-See [every production/r1 difference](standalone-signin-production-comparison.md) and
-`review/production-comparison.json`. R1 remains intact for audit and is superseded by this r2.
+Existing local `web/dist` bytes were copied without rebuilding; their exact hashes are in
+`review/runtime-manifest.json`. Their equality to the currently deployed standalone assets is
+**unverified**. Compare against the private deployment baseline before approving a backend-only
+release. A mismatch requires explicit review or a new candidate using the retained deployed bytes.
+The frontend source in the archive is baseline context; the image deliberately copies frozen
+`web/dist`, never rebuilding it. The additional gateway-contract source is verification-only.
 
-The archive manifest binds individual files; the image check verifies all 138 copied runtime files.
+The archive manifest binds individual files; the image check verifies all 137 copied runtime files.
 The Dockerfile selects the standalone config and preserves the existing stopped-state entrypoint.
-The reference Railway config selects that Dockerfile, one replica, ON_FAILURE retries 10 and
-a null healthcheck, matching the observed provider service-manifest values. Keep existing service
-settings and region; do not add the unrelated r1 healthcheck/retry changes. Provider property-file
-precedence must be rechecked before any future source upload; do not upload the mutable repository checkout.
+The bundled Railway config selects that Dockerfile, one replica and `/health`. Existing service
+overrides must be checked against this context; do not upload the mutable repository checkout.
 Rebuilding produces a new image whose ID must be recorded and checked; the exported image is the
 exact executable candidate reviewed here. No production state, settings files, credentials,
 cookie exports or `node_modules` symlink are included in the source archive.
@@ -81,7 +80,7 @@ This is no state-format migration and does not import `.payables` into Proto `.h
   canonical supplier mapping. No reservation or provider agent is created.
 - `docker build --platform linux/amd64`: passed with the pinned base and frozen lockfile.
 - Packaged image check: **passed**, `--network none`, no production mount, synthetic `/tmp` state.
-  It checks 138 hashes, both challenge recipients, health/static page bytes, unknown signing-host
+  It checks 137 hashes, both challenge recipients, health/static page bytes, unknown signing-host
   refusal and two entrypoint starts preserving empty `.payables` registry and synthetic settings/
   record sentinels. This is not a production backup/restore test or a populated-registry restore.
   Existing offline provisioning tests cover retained registrations; inspect the full suite log.
@@ -90,12 +89,12 @@ This is no state-format migration and does not import `.payables` into Proto `.h
 Reproduce the packaged image check after verifying and loading the exact image export:
 
 ```sh
-docker load --input payables-standalone-signin-20261015-r2.image.tar
-docker image inspect payables-standalone-signin:20261015-r2 --format '{{.Id}}'
+docker load --input payables-standalone-signin-20261015-r1.image.tar
+docker image inspect payables-standalone-signin:20261015-r1 --format '{{.Id}}'
 # In the extracted source directory:
 docker run --rm --platform linux/amd64 --network none \
   --mount type=bind,src="$PWD/review",dst=/review,readonly \
-  --entrypoint node payables-standalone-signin:20261015-r2 /review/check-image.mjs
+  --entrypoint node payables-standalone-signin:20261015-r1 /review/check-image.mjs
 ```
 
 Do not run the production entrypoint against a live or copied production volume during review.
@@ -165,11 +164,11 @@ resubmit an attempted owner signature, or retry an invoice because routing faile
 image cannot read current records, preserve them, keep intake closed and prepare forward recovery.
 Backup restoration requires a separate reconciliation decision; it is not the normal rollback.
 
-Open release gates: approval; fresh production baseline confirmation (the read-only comparison passed); stopped-writer backup
+Open release gates: approval; production baseline/config/asset comparison; stopped-writer backup
 and isolated restore; verified no-overlap rollout; live sign-in on both hostnames; and existing
 private access or separately reported empty authenticated workspace.
 
 Repository guidance: `AGENTS.md`, `CONTEXT.md`, `docs/operations.md`,
-`docs/payables-self-service.md` and `docs/proto-release-handoff.md`. No additional skill was needed
+`docs/payables-self-service.md` and `docs/releases/proto-release-handoff.md`. No additional skill was needed
 for this local packaging task. Prior visible-wallet evidence used the browser skills cited in the
 Proto handoff; live acceptance must follow those credential/session boundaries.

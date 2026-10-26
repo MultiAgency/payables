@@ -123,7 +123,7 @@ automatic supplier conversion/forwarding and residual-fund return remain outside
 
 ## Release acceptance walkthrough
 
-Use the [release handoff](release-report-payout.md) for candidate identity, state preservation,
+Use the [release handoff](releases/release-report-payout.md) for candidate identity, state preservation,
 production gates and recovery boundaries.
 
 Prepare the matching server and frontend as one release. Before the owner deploys, complete typecheck,

@@ -18,6 +18,6 @@
   "railwayDeploymentPullVerified": false,
   "rebuilt": false,
   "productionMutations": [],
-  "runbook": "docs/maintenance-registry-publication.md",
+  "runbook": "docs/releases/maintenance-registry-publication.md",
   "railwayPullAuthentication": "not configured or verified; requires supported plan and read-only package access"
 }

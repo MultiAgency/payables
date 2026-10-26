@@ -16,7 +16,7 @@ deployment for volume file commands and its recursive downloads do not preserve 
 metadata. A maintenance-only image with no application/executor code and portable archive/restore
 checks is locally tested, including UID/GID, modes, links, ACL/xattrs and SQLite WAL/SHM. The actual
 provider handoff and production preservation checks are unverified; no writers were stopped or
-production settings changed. See [the provider access review](stopped-volume-access.md).
+production settings changed. See [the provider access review](releases/stopped-volume-access.md).
 
 Generated-host fallback authentication remains a release blocker (2026-10-15 UTC).
 The Payables fallback challenge names the custom domain; the current frontend offers its page's
@@ -27,7 +27,7 @@ sign-in and is not a simultaneous-host remedy. An opt-in `DASHBOARD_SIGNIN_HOSTS
 the request's explicitly allowed host for both challenge and verification, leaving canonical URLs
 unchanged. Real-gateway offline tests cover both hosts and cross-host refusal; the remedy is undeployed.
 Owner-controlled fallback sign-in and retained private-record access remain unverified.
-See [the release handoff](proto-release-handoff.md).
+See [the release handoff](releases/proto-release-handoff.md).
 
 Work orders bind one immutable invoice to a dedicated agent. The local dispatch check compares
 payee, asset, exact amount, invoice identity, policy digest and grant deadline, after the final provider

@@ -116,7 +116,7 @@ railway down --project 0c5d641c-592a-47f4-8606-48d07a91d276 \
 The following commands are **planned, not executed against production**. Run only once the stopped
 volume is available as a verified read-only filesystem at `STOPPED_VOLUME_ROOT`. Set the other
 paths to new private directories outside that filesystem; `PAYABLES_HELPER_DIR` contains the
-reviewed [verify-stopped-state.mjs](../scripts/verify-stopped-state.mjs). Its SHA-256 is
+reviewed [verify-stopped-state.mjs](../../scripts/verify-stopped-state.mjs). Its SHA-256 is
 `1e680845b923a78ff0b68ce2b14402edf940e008295c3fe742d51713f157f5de`.
 Use the exact r2 image ID shown below. No app entrypoint starts.
 

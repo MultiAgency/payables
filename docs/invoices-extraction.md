@@ -49,7 +49,7 @@ reserve a replacement for an existing agent or copy its live state to populate t
    and all existing contributor links and private bridge routing. Verify the intended host bindings
    and access before changing DNS/domain ownership. The same hostname cannot route both independently
    without an explicit gateway plan.
-4. Follow [stopped-volume preservation](stopped-volume-access.md) for any existing-service changes.
+4. Follow [stopped-volume preservation](releases/stopped-volume-access.md) for any existing-service changes.
    Keep old settings and state intact. No record conversion or cross-host executor transfer is part of
    this extraction.
 5. Capture a new verified source candidate: this extraction changes the earlier frozen source identity.

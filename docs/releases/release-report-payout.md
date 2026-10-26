@@ -34,7 +34,7 @@ production state, cookies, grant secrets or partner keys belong in the source ar
 ## Before deployment
 
 The contributor app now has a dedicated extraction path: see
-[Standalone contributor app](invoices-extraction.md). `Dockerfile.invoices` is for the new app and a
+[Standalone contributor app](../invoices-extraction.md). `Dockerfile.invoices` is for the new app and a
 separate volume; it must not replace the legacy payout executor's entrypoint. This changes the source
 identity and requires a newly verified candidate before release.
 
@@ -49,7 +49,7 @@ The local candidate can be verified while these production gates remain outstand
    The maintenance/archive approach is tested locally; the provider handoff and production restore
    checks remain unverified. A live recursive file download is not a stopped-writer backup.
 3. Confirm the required custom/generated-host sign-in configuration and its hosted acceptance,
-   following [enforcement](enforcement.md). The documented alias remedy is not established as deployed.
+   following [enforcement](../enforcement.md). The documented alias remedy is not established as deployed.
 4. Agree a maintenance window: no unattended observation/freeze conflict, new submissions, approvals,
    schedules or CLI writers. One executor per agent remains mandatory; the lease is single-host.
    Review retained owner intents before startup: a signature from a passed DAO vote can progress
@@ -59,7 +59,7 @@ These are owner release gates. Preparing this handoff does not satisfy them or a
 
 ## Preserve state and upgrade together
 
-Follow [Operations](operations.md#owner-run-rollout) and the stopped-volume procedure. Stop the payout
+Follow [Operations](../operations.md#owner-run-rollout) and the stopped-volume procedure. Stop the payout
 parent and every private work-order child, gateway-managed writers and relevant CLI processes before
 backup. Preserve each service's actual complete state tree and settings, including:
 
@@ -97,7 +97,7 @@ capacity refusal must not substitute a shared payout. Review expected usage befo
 | Payout preparation | Use Pay, interrupt/cancel where appropriate, then reopen the same isolated identity. Verify the separate payment deadline. | Agent creation and grant signatures require explicit owner action; do not sign merely to inspect the UI. |
 | Mainnet demonstration | Only after separate authorization, authorize the agent/grant, fund the exact amount, submit once, approve its held payout and follow settlement evidence. | Funding and signatures are real operations. A vote, HTTP success or reported balance is not settlement proof. |
 
-Use the detailed [acceptance walkthrough](payment-requests.md#release-acceptance-walkthrough).
+Use the detailed [acceptance walkthrough](../payment-requests.md#release-acceptance-walkthrough).
 Do not deliberately induce a production timeout, tamper with live terms or send funds to test a refusal;
 those fault cases have offline coverage. An unexpected outcome stays on its retained identity.
 

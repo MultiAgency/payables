@@ -77,7 +77,7 @@ changed or rerun here. Supplier enforcement remains Proto's contract responsibil
 - `test/proto-release.test.ts`: callback reproduction and r2 supplier contract checks.
 - `test/proto-signin-http.test.ts`: real gateway offline authentication regression.
 - `docs/enforcement.md`: record the gap and undeployed remedy.
-- `docs/proto-release-handoff.md`: this handoff.
+- `docs/releases/proto-release-handoff.md`: this handoff.
 
 Existing dirty and untracked integration/contributor work was present before this task. The owner
 confirmed nobody else was editing this repository. Existing changes were preserved, including
