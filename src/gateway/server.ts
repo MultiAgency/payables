@@ -1,6 +1,7 @@
 import { platformAuthenticated, platformPayables, platformRequest, PlatformAccessDenied } from "./platform-payables.js";
 import { contributorPortalPage } from "../contributor-portal-page.js";
 import { signingHost } from "./signing-host.js";
+import { HandoffTickets, TicketLimit } from "./handoff.js";
 import { createHmac } from "node:crypto";
 import { ProvisioningStore, provisioningEnv, reservationInput } from "./provisioning.js";
 import { type ChildProcess, spawn } from "node:child_process";
@@ -95,6 +96,7 @@ function forward(req: IncomingMessage, res: ServerResponse, agent: AgentEntry, p
  */
 const CHALLENGES_PER_HOUR = 20;
 const mayChallenge = hourlyLimit(CHALLENGES_PER_HOUR);
+const handoffTickets = new HandoffTickets();
 
 createServer(async (req, res) => {
   // On every answer: no other site may frame these pages (they trigger wallet signatures, so a hidden
@@ -128,6 +130,29 @@ createServer(async (req, res) => {
     if (pathname === "/gw/me") {
       const me = await viewer(req);
       return json(res, 200, { agents: await agentsView(me), invoices: config.invoices ?? null, viewer: me, ...(config.selfService && { selfService: true }) });
+    }
+
+    // Dashboard handoff (src/gateway/handoff.ts): the dashboard's server mints a one-use ticket with the bridge secret;
+    // the browser then arrives here with it and gets this host's own session. Off unless the bridge secret is set.
+    if (pathname === "/platform/handoff" && req.method === "POST") {
+      const secret = process.env.PAYABLES_BRIDGE_SECRET;
+      if (!secret || secret.length < 32) return json(res, 404, { error: "Not found" });
+      if (!platformAuthenticated(req.headers.authorization, secret)) return json(res, 403, { error: "Platform authentication required" });
+      try {
+        const body = await readJson(req);
+        return json(res, 200, { ...handoffTickets.issue(body.account), url: `https://${HOST}/gw/handoff` }, { "cache-control": "private, no-store" });
+      } catch (error) {
+        return json(res, error instanceof TicketLimit ? 429 : 400, { error: (error as Error).message }, { "cache-control": "private, no-store" });
+      }
+    }
+    if (pathname === "/gw/handoff" && req.method === "GET") {
+      const secret = process.env.PAYABLES_BRIDGE_SECRET;
+      if (!secret || secret.length < 32) return json(res, 404, { error: "Not found" });
+      const account = handoffTickets.consume(url.searchParams.get("ticket"));
+      if (!account) return json(res, 401, { error: "This handoff link is unknown, used or expired. Open Payables again from the dashboard." });
+      const access = await resolveAccess(account, fleet);
+      if (!config.selfService && !Object.keys(access).length) return json(res, 403, { error: `${account} doesn't own any agent here, nor is a member of a DAO that does` });
+      return res.writeHead(303, { location: "/", "set-cookie": session.open(account), "cache-control": "private, no-store" }).end();
     }
 
     if (pathname === "/platform/payables" && req.method === "POST") {
