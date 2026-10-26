@@ -69,7 +69,7 @@ These are catalog targets, not established guarantees. Evidence stages describe 
 |---|---|---|---|---|
 | Capability target | Each work order has a dedicated agent and expiring grant, with owner-approved invoice payment | — | Tested offline | Buyer flow implemented in Payables and the invoice portal. Offline tests cover fixed policy/grant requests, process isolation, authenticated intake, concurrent filing and restart identity (test/work-order-*.test.ts; test/browser/work-orders.cjs). Funding and settlement on a deployed work-order agent remain unobserved; residual-fund return is not built |
 | Safety target | Supplier payments can't be traced to the business | The signed policy | Tested offline | Payouts are confidential transfers under the policy (test/authorize.test.ts); no order paid on mainnet |
-| Capability target | Inbound payments are swapped to stables and forwarded to the supplier's treasury | — | Not yet | Not built |
+| Capability target | Inbound payments are swapped to stables and forwarded to the supplier's treasury | — | Not yet | Flow defined and modelled offline only (docs/supplier-settlement.md, test/supplier-settlement.test.ts); not connected to dispatch, nothing observed on mainnet |
 | Safety target | A tampered order (wrong supplier, changed amount, late) is refused | Our server | Tested offline | Work-order dispatch locally binds the exact invoice identity, payee, asset, amount, policy digest and grant deadline. Offline tests refuse altered terms and expiry during final reads (test/work-order-binding.test.ts). No work-order refusal observed on mainnet; accepted payments may finish after the deadline |
 
 ## 17 Campaign payouts (roadmap)

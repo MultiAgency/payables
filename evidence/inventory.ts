@@ -162,7 +162,7 @@ export const PROTOTYPES: Record<Kind, { name: string; tagline: string; briefs: [
             text: "Inbound payments are swapped to stables and forwarded to the supplier's treasury",
             known: "not-yet",
             evidence:
-              "Not built",
+              "Flow defined and modelled offline only (docs/supplier-settlement.md, test/supplier-settlement.test.ts); not connected to dispatch, nothing observed on mainnet",
           },
           {
             type: "guarantee",
