@@ -22,6 +22,24 @@ Treasury executor and its documentation below; historical observations about oth
 establish evidence for this standalone deployment. The frontend uses MultiAgency branding and
 shadcn Lyra styling.
 
+## What Payables owns (decision, issue #2)
+
+Payables is a **product frontend and workflow** (ideas 01 and 03: payment intake, agreements, purchase orders,
+payout approval, contributor reports) on top of the shared MultiAgency backend. It follows the decision in
+[MultiAgency/sdk#1](https://github.com/MultiAgency/sdk/issues/1): the `sdk` repository owns the gateway, executor and
+money path, and Payables reaches them through `@multiagency/sdk` and the gateway API.
+
+| Payables owns | Payables uses from the platform |
+|---|---|
+| The web app, copy and navigation (`web/`) | Gateway, host-bound sign-in and sessions |
+| Agreements, work orders, compensation and invoice workflow records and rules | Executor, money lock, one send site, reconciliation |
+| Its release, rollback and deployment | `@multiagency/sdk` schemas and typed clients |
+| The payment export | The provider's policy, grant and approval controls |
+
+The gateway, executor and money-path code in `src/` is a **copy** that predates this decision. It stays in place and
+keeps serving the existing deployments and their state volumes; nothing is removed until the
+[migration plan](docs/backend-migration-plan.md) is carried out step by step.
+
 ## Inherited executor architecture
 
 
