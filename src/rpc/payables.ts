@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pay } from "../agent.js";
+import { exportPayments } from "../payment-export.js";
 import { held, paymentHistory, paymentStatus } from "../payouts.js";
 import { cancelPreparedInvoice, listInvoices } from "../invoice-store.js";
 import { type AgreementStore, localStore, remoteStore } from "../agreements.js";
@@ -38,6 +39,8 @@ export const payablesRoutes = {
   held: os.handler(() => held({ complete: true })),
   /** One of this agent's payments as the provider sees it now (`paymentStatus` in src/payouts.ts). */
   // `waitMs`: long-poll at the provider, kept under proxies' and browsers' timeouts.
+  /** Read-only export of every recorded payment, with its state and DAO proposal link (src/payment-export.ts). */
+  paymentExport: os.handler(() => exportPayments()),
   paymentHistory: os.handler(() => paymentHistory()),
   paymentStatus: os.input(z.object({ correlationId: z.string().min(1).max(200), waitMs: z.number().int().min(0).max(25_000).optional() }))
     .handler(({ input }) => paymentStatus(input.correlationId, input.waitMs)),

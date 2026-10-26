@@ -13,6 +13,7 @@ const READS = new Set([
   "activity",
   "unresolved",
   "held",
+  "paymentExport",
   "autopilot/get",
   "strategy/get",
   "autopilot/evidence",
